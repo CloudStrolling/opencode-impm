@@ -165,7 +165,8 @@ function main() {
         }
 
         console.log(`Copying ${dir}/ -> .opencode/${dir}/ ...`);
-        copyDirRecursive(srcDir, destDir);
+        // clean=true: empty the target directory before copying to avoid stale files from repeated installs (idempotent install)
+        copyDirRecursive(srcDir, destDir, true);
     }
 
     const pluginDest = join(opencodeDir, "plugins", "impm");

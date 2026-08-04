@@ -58,12 +58,17 @@ foreach ($dir in @("commands", "agents", "skills")) {
         continue
     }
     Write-Host "Copying $dir/ -> .opencode/$dir/ ..."
+    # Remove the existing target directory first to avoid Copy-Item nesting the source directory into the existing one (repeated installs)
+    if (Test-Path $destDir) {
+        Remove-Item -Path $destDir -Recurse -Force
+    }
     Copy-Item -Path $srcDir -Destination $destDir -Recurse -Force
 }
 
 if (Test-Path $distDir) {
     $pluginDest = Join-Path $opencodeDir "plugins\impm"
     Write-Host "Installing local plugin -> .opencode/plugins/impm/ ..."
+    New-Item -ItemType Directory -Path $pluginDest -Force | Out-Null
     Copy-Item -Path (Join-Path $pluginRoot "package.json") -Destination $pluginDest -Force
     Copy-Item -Path $distDir -Destination (Join-Path $pluginDest "dist") -Recurse -Force
 } else {
