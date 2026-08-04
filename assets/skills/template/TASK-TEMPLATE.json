@@ -1,0 +1,20 @@
+{
+  "projectName": "",
+  "version": "",
+  "sequence": 1,
+  "tasks": [
+    {
+      "id": "TASK-001",
+      "title": "",
+      "description": "",
+      "taskType": "backend",
+      "userStoryId": "US-001",
+      "upstreamTaskIds": [],
+      "downstreamTaskIds": [],
+      "priority": "P0",
+      "status": "Not Started",
+      "testMethod": "",
+      "acceptanceCriteria": ""
+    }
+  ]
+}

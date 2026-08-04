@@ -1,0 +1,43 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+*.tsbuildinfo
+*.js.map
+*.d.ts.map
+
+# Generated install directories (the suite install script copies agents/commands/skills/plugins under .opencode/)
+.opencode/
+
+# npm packaging output
+*.tgz
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Log files
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Editors/IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Test coverage
+coverage/
+
+# Dependency cache
+.pnp
+.pnp.js

@@ -1,0 +1,36 @@
+{
+  "name": "opencode-impm",
+  "version": "0.1.0",
+  "description": "I am the Project Manager (AI Project Manager) OpenCode plugin - an engineered full-lifecycle development suite (agents + commands + skills + tools) implementing the traditional waterfall development process",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "install:plugin": "node scripts/install.mjs",
+    "postinstall": "node scripts/install.mjs"
+  },
+  "keywords": [
+    "opencode-plugin",
+    "opencode",
+    "impm",
+    "project-manager",
+    "ai-project-manager",
+    "tdd"
+  ],
+  "author": "jenemy8023 <jenemy8023@163.com>",
+  "license": "Apache-2.0",
+  "files": [
+    "dist/",
+    "assets/",
+    "scripts/install.mjs"
+  ],
+  "devDependencies": {
+    "typescript": "^5.7.0",
+    "@types/node": "^22.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
