@@ -1,6 +1,6 @@
 ---
 name: impm-init-git
-description: Brings the current project under git management, reads the GITIGNORE-TEMPLATE template to create/update .gitignore based on the operating system and the project programming language, and makes the initial commit. Use when a git baseline needs to be established during the initialization phase.
+description: Brings the current project under git management, reads the GITIGNORE-TEMPLATE template and creates/updates .gitignore with the full template content (line-by-line, without trimming any entries), and makes the initial commit. Use when a git baseline needs to be established during the initialization phase.
 ---
 
 # impm-init-git Skill
@@ -41,12 +41,12 @@ Call impm_git(projectRoot, status) to determine whether the current project dire
 
 ### Step 2: Create/update .gitignore
 Call impm_template_reader(projectRoot, GITIGNORE-TEMPLATE) to read the .gitignore template from the skills template directory (.opencode/skills/template/, or assets/skills/template/ as fallback). The template provides ignore entries grouped by operating system, IDE/editors, AI development tools, and programming language.
-Based on the operating system (Windows), the project programming language (obtained via impm_project_info), and the development tool requirements, create or update .gitignore in the project root directory from the template content:
-- Keep the template entries matching the current operating system and the IDE/editor and AI development tools actually in use.
-- Keep the dependency, build output, log/temp, and environment sections matching the project programming language.
-- Remove template entries irrelevant to the current environment (e.g., other programming languages' build outputs, other platforms' system files).
-- Never omit the environment and secrets entries: .env, *.local, .secret (secret-type files are never committed).
-Verify that .gitignore contains at least the dependency, build artifact, log/temp, and environment entries for the current project.
+Create or update .gitignore in the project root directory by copying the template content line by line without any trimming:
+- The generated .gitignore must contain all the template entries, compared line by line against the template content, including the entries for irrelevant programming languages, other platforms' system files, unused IDE/editors, and AI development tools that are not in use.
+- Do not remove, filter, or cut any template line; each line of the template must be present in the final .gitignore.
+- The environment and secrets entries (.env, .env.*, .env.local, etc.) are kept as-is from the template; secret-type files are never committed.
+- If .gitignore already exists, update it by comparing it line by line with the template, so that the updated .gitignore fully covers the template content.
+Verify that .gitignore covers every line of the template: every entry in the template content exists in .gitignore.
 
 ### Step 3: Initial commit
 Call impm_git(projectRoot, commit, null, Initialize impm project) to make an initial commit of all current initialization content, and verify the commit succeeded via impm_git(projectRoot, status) or log.
