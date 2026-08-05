@@ -9,6 +9,7 @@
       "description": "",
       "taskType": "backend",
       "userStoryId": "US-001",
+      "apiId": "",
       "upstreamTaskIds": [],
       "downstreamTaskIds": [],
       "priority": "P0",
