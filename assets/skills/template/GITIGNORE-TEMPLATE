@@ -1,0 +1,317 @@
+# ===================== Operating Systems =====================
+# Mac
+.DS_Store
+.AppleDouble
+._*
+# Windows
+Thumbs.db
+desktop.ini
+# Linux
+*~
+
+# ===================== Common IDE / Editors =====================
+# JetBrains family (IntelliJ IDEA / GoLand / CLion / PyCharm / WebStorm / PhpStorm / Rider, etc.)
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+# Rider (.NET): solution-level user settings
+*.DotSettings.user
+
+# vscode
+.vscode/
+*.code-workspace
+
+# Sublime
+*.sublime-project
+*.sublime-workspace
+# Vim
+*.swp
+*.swo
+# Atom
+.atom/
+
+# ===================== Other IDE / Editors (niche) =====================
+# Eclipse
+.metadata/
+.settings/
+.classpath
+.project
+/bin/
+# NetBeans
+nbproject/private/
+nbdist/
+.nb-gradle/
+# Xcode
+xcuserdata/
+DerivedData/
+*.xcuserstate
+*.xccheckout
+*.moved-aside
+*.dSYM/
+.swiftpm/
+# Android Studio
+local.properties
+*.apk
+*.aab
+*.ap_
+captures/
+.externalNativeBuild/
+.cxx/
+# Visual Studio / .NET
+.vs/
+*.suo
+*.user
+*.userosscache
+*.ncb
+*.sdf
+*.opensdf
+*.cachefile
+*.VC.db
+*.VC.VC.opendb
+/obj/
+# Qt Creator
+*.pro.user
+*.pro.user.*
+.qmake.stash
+.qmake.cache
+.qtc_clangd/
+*.autosave
+# Code::Blocks
+*.layout
+*.depend
+# RStudio
+.Rproj.user/
+.Rhistory
+.RData
+.Ruserdata
+# Spyder
+.spyproject/
+# BlueJ
+bluej.pkh
+# Komodo Edit/IDE
+.komodotools/
+
+# ===================== AI Development Tools =====================
+# OpenCode
+.opencode/
+.opencode.json
+opencode.json
+opencode.jsonc
+opencode-cache/
+.opencode-snapshots/
+.opencode-history/
+*.opencode.tmp
+
+# Claude Code
+.claude/
+.claudeignore
+.claude-history/
+.claude/conversations/
+.claude/sessions/
+.claude/checkpoints/
+.claude/skills/.cache/
+.claude/settings.local.json
+*.skill-backup
+conversation-history.jsonl
+
+# OpenAI Codex
+.codex/
+.codexignore
+codex_history/
+codex-*.log
+
+# GitHub Copilot
+.copilot/
+.copilot-agent/
+copilot-*.log
+.copilotignore
+.vscode/copilot/
+
+# Cursor AI
+.cursor/
+.cursor-index/
+.cursor-cache/
+
+# Codeium / Windsurf
+.codeium/
+windsurf-sessions/
+
+# Tabnine
+.tabnine/
+.tabnine-cache/
+
+# Gemini CLI
+.gemini/
+.geminiignore
+gemini-*.log
+
+# Cline / Roo
+.cline/
+.clineignore
+.roo/
+.rooignore
+
+# Aider
+.aider.chat.history.md
+.aider.input.history
+.aider.tags.cache.v3
+.aider.models.cache.v3
+
+# Continue
+.continue/
+.continueignore
+
+# AI generic temporary files
+ai-tmp/
+ai-generated-temp/
+*.ai-backup
+
+# ===================== Front-end / Node.js =====================
+# Dependencies
+node_modules/
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+bun.lockb
+bun.lock
+
+# Build output
+dist/
+build/
+output/
+coverage/
+
+# Logs, caches
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+.npm
+.eslintcache
+
+# Compilation output
+*.tsbuildinfo
+*.js.map
+*.d.ts.map
+
+# Framework-level output
+.next/
+.nuxt/
+.output/
+.svelte-kit/
+.vercel/
+
+# ===================== Python =====================
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+env/
+venv/
+.venv/
+env.bak/
+venv.bak/
+.pytest_cache/
+.coverage
+htmlcov/
+*.pyd
+
+# ===================== Java / Maven / Gradle =====================
+# Maven
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+# Gradle
+.gradle/
+gradle-app.setting
+!gradle-wrapper.jar
+# Compiled classes
+*.class
+*.jar
+*.war
+
+# ===================== C/C++ / CMake =====================
+cmake-build-*/
+cmake-build-debug/
+cmake-build-release/
+Debug/
+Release/
+*.o
+*.obj
+*.exe
+*.dll
+*.so
+*.a
+*.lib
+
+# ===================== Rust =====================
+# Compilation output (/target/ only matches the root directory, no conflict with Maven's target/)
+/target/
+*.rs.bk
+# Cargo.lock: usually ignored for libraries; committing is recommended for applications
+Cargo.lock
+
+# ===================== Go =====================
+# Test binaries and coverage output
+*.test
+*.out
+*.prof
+coverage.out
+# Compilation output (macOS dynamic library)
+*.dylib
+
+# ===================== PHP =====================
+# Composer dependencies
+/vendor/
+composer.phar
+# PHPUnit result cache
+.phpunit.result.cache
+
+# ===================== Dart / Flutter =====================
+.dart_tool/
+.packages
+.flutter-plugins
+.flutter-plugins-dependencies
+
+# ===================== Database / Cache / Logs / Temp =====================
+# Logs
+*.log
+logs/
+log/
+# Databases
+*.db
+*.sqlite
+*.sqlite3
+# Caches, temporary files
+tmp/
+temp/
+.cache/
+# Local branch records, patches, merge conflict backups
+*.patch
+*.diff
+*.orig
+# Backup files
+*.bak
+*.backup
+
+# ===================== Environment Secrets =====================
+.env
+.env.local
+.env.dev
+.env.test
+.env.staging
+.env.prod
+.env.*
+!.env.example
+
+# ===================== Package Managers =====================
+.pnp
+.pnp.js
+
+# ===================== Archives =====================
+*.tgz
+
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 CloudStrolling/jenemy8023 <jenemy8023@163.com>
