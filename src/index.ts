@@ -22,6 +22,10 @@
  * read/write, template reading, version management, progress management, task management, context
  * building, project analysis, and git operations.
  *
+ * Built-in feature: prompt-recorder (prompt recording + conversation export, including a
+ * chat.message hook, an event hook, and 3 manual tools: impm_prompt_record,
+ * impm_prompt_finalize, impm_prompt_export).
+ *
  * Usage:
  * 1. npm package mode: configure "plugin": ["opencode-impm"] in opencode.json
  * 2. Local mode: copy assets to .opencode/ via scripts/install.mjs,
@@ -38,6 +42,7 @@ import { taskManagerDefinition, taskManagerExecute } from "./tools/task-manager.
 import { contextBuilderDefinition, contextBuilderExecute } from "./tools/context-builder.js";
 import { projectAnalyzerDefinition, projectAnalyzerExecute } from "./tools/project-analyzer.js";
 import { gitHelperDefinition, gitHelperExecute } from "./tools/git-helper.js";
+import { createPromptRecorder } from "./tools/prompt-recorder.js";
 
 /**
  * Create the JSON schema for an OpenCode tool argument
@@ -68,7 +73,15 @@ interface ToolContext {
 export default async function impmPlugin(context: ToolContext) {
     const projectRoot = context.project?.path || context.directory;
 
+    // Built-in feature: prompt-recorder (prompt recording + conversation export, including hooks and 3 manual tools)
+    const promptRecorder = await createPromptRecorder(projectRoot);
+
     return {
+        /** chat.message hook: automatically records the user prompt to prompts.md */
+        "chat.message": promptRecorder.chatMessage,
+        /** Event hook: automatically backfills the tokens and exports the conversation when the main session turn ends */
+        event: promptRecorder.event,
+
         /** Custom tool registry */
         tool: {
             /** Project information tool - parses the project basic information from docs/project.md */
@@ -344,6 +357,15 @@ export default async function impmPlugin(context: ToolContext) {
                     });
                 },
             },
+
+            /** Prompt recording tool (prompt-recorder built-in feature) - backfills the user prompts */
+            impm_prompt_record: promptRecorder.tool.impm_prompt_record,
+
+            /** Prompt recording tool (prompt-recorder built-in feature) - recomputes the tokens and backfills them */
+            impm_prompt_finalize: promptRecorder.tool.impm_prompt_finalize,
+
+            /** Prompt recording tool (prompt-recorder built-in feature) - exports the conversation snapshot */
+            impm_prompt_export: promptRecorder.tool.impm_prompt_export,
         },
     };
 }
