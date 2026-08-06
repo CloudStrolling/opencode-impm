@@ -104,6 +104,23 @@ function copyDirRecursive(src, dest, clean = false) {
     }
 }
 
+function ensureOpenCodePackageJson(opencodeDir) {
+    const pkgPath = join(opencodeDir, "package.json");
+    let pkg = {};
+    if (existsSync(pkgPath)) {
+        try {
+            pkg = JSON.parse(readFileSync(pkgPath, "utf-8"));
+        } catch {
+            console.warn(`  Failed to parse .opencode/package.json; it will be rebuilt`);
+        }
+    }
+    if (pkg.type !== "module") {
+        pkg.type = "module";
+        writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + "\n", "utf-8");
+        console.log("Updated .opencode/package.json (type: module, so the plugin entry is resolved as ESM)");
+    }
+}
+
 function updateOpenCodeConfig(projectRoot) {
     const configPath = join(projectRoot, "opencode.json");
 
@@ -183,9 +200,19 @@ function main() {
             );
         }
         copyDirRecursive(DIST_DIR, pluginDestDir);
+
+        // opencode only auto-discovers direct *.js/*.ts files under .opencode/plugins/ (it does not
+        // recurse into subdirectories), so an entry file pointing to the dist build output must be
+        // generated at the root of plugins/
+        const pluginEntry = join(opencodeDir, "plugins", "impm.js");
+        writeFileSync(pluginEntry, 'export { default } from "./impm/dist/index.js";\n', "utf-8");
+        console.log("Generated plugin entry file -> .opencode/plugins/impm.js");
     } else {
         console.warn(`  Skip: dist directory does not exist (run npm run build first): ${DIST_DIR}`);
     }
+
+    // Ensure .opencode/package.json declares ESM (the entry file impm.js uses the export syntax)
+    ensureOpenCodePackageJson(opencodeDir);
 
     console.log("");
 

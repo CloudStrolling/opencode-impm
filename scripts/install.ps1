@@ -70,10 +70,63 @@ if (Test-Path $distDir) {
     Write-Host "Installing local plugin -> .opencode/plugins/impm/ ..."
     New-Item -ItemType Directory -Path $pluginDest -Force | Out-Null
     Copy-Item -Path (Join-Path $pluginRoot "package.json") -Destination $pluginDest -Force
-    Copy-Item -Path $distDir -Destination (Join-Path $pluginDest "dist") -Recurse -Force
+    # Empty the old target directory first, then copy the dist contents (not the directory itself),
+    # to avoid nesting dist/dist (idempotent install)
+    $pluginDistDest = Join-Path $pluginDest "dist"
+    if (Test-Path $pluginDistDest) {
+        Remove-Item -Path $pluginDistDest -Recurse -Force
+    }
+    New-Item -ItemType Directory -Path $pluginDistDest -Force | Out-Null
+    Copy-Item -Path (Join-Path $distDir "*") -Destination $pluginDistDest -Recurse -Force
+
+    # opencode only auto-discovers direct *.js/*.ts files under .opencode/plugins/ (it does not
+    # recurse into subdirectories), so an entry file pointing to the dist build output must be
+    # generated at the root of plugins/
+    $pluginEntry = Join-Path $opencodeDir "plugins\impm.js"
+    [System.IO.File]::WriteAllText($pluginEntry, 'export { default } from "./impm/dist/index.js";' + [Environment]::NewLine)
+    Write-Host "Generated plugin entry file -> .opencode/plugins/impm.js"
 } else {
     Write-Warning "Skip: dist directory does not exist (run npm run build first): $distDir"
 }
+
+# Ensure .opencode/package.json declares ESM (the entry file impm.js uses the export syntax)
+$opencodePkgPath = Join-Path $opencodeDir "package.json"
+if (Test-Path $opencodePkgPath) {
+    $pkgJson = Get-Content -Path $opencodePkgPath -Raw -Encoding UTF8 | ConvertFrom-Json
+    if ($pkgJson.type -ne "module") {
+        $pkgJson | Add-Member -NotePropertyName type -NotePropertyValue "module" -Force
+        [System.IO.File]::WriteAllText($opencodePkgPath, ($pkgJson | ConvertTo-Json -Depth 10))
+        Write-Host "Updated .opencode/package.json (type: module)"
+    }
+} else {
+    [System.IO.File]::WriteAllText($opencodePkgPath, '{"type": "module"}')
+    Write-Host "Generated .opencode/package.json (type: module)"
+}
+
+# Update the opencode.json config (npm install mode registers the plugin name; the local
+# self-install mode is auto-discovered through the entry file)
+$configPath = Join-Path $targetRoot "opencode.json"
+if (Test-Path $configPath) {
+    $config = Get-Content -Path $configPath -Raw -Encoding UTF8 | ConvertFrom-Json
+} else {
+    $config = @{}
+}
+if (-not $config.'$schema') {
+    $config | Add-Member -NotePropertyName '$schema' -NotePropertyValue "https://opencode.ai/config.json" -Force
+}
+$resolvedTarget = (Resolve-Path $targetRoot).Path
+$isSelfInstall = ($resolvedTarget -eq $pluginRoot.Path)
+if (-not $isSelfInstall) {
+    $plugins = @($config.plugin)
+    if ($plugins -notcontains "opencode-impm") {
+        $plugins += "opencode-impm"
+    }
+    $config | Add-Member -NotePropertyName plugin -NotePropertyValue $plugins -Force
+    Write-Host "Config file updated: $configPath (plugin: opencode-impm)"
+} else {
+    Write-Host "Local self-install: skip config.plugin registration (the plugin entry file is auto-discovered under .opencode/plugins/)"
+}
+[System.IO.File]::WriteAllText($configPath, ($config | ConvertTo-Json -Depth 10))
 
 Write-Host ""
 Write-Host "============================================"
