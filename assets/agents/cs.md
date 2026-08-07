@@ -2,13 +2,14 @@
 description: Code Searcher - Queries local code as requested, providing existing code and utility class information for tasks
 mode: subagent
 temperature: 0.1
-tools:
-  read: true
-  grep: true
-  glob: true
-  impm_doc_reader: true
-  impm_progress: true
 permission:
+  read: allow
+  grep: allow
+  glob: allow
+  impm_doc_reader: allow
+  impm_progress: allow
+  skill: allow
+  question: allow
   task:
     "*": "deny"
 ---

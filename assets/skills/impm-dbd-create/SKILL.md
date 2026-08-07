@@ -12,7 +12,12 @@ Database design, DBD, database scripts, SQL, impm-dbd-create
 Use after the System Architecture Design update has been completed (after impm-sad-update). Check whether the master Database Design Document docs/{project abbreviation}-dbd.md exists: if it does not exist, the current project needs no database and this step is skipped; if it exists, complete the Database Design Document and SQL scripts for the current version following the DBD template based on the SAD and the current version PRD, and record this step in the version progress file.
 
 ## Executing Agent
-This skill is executed by the DBA subagent. Load this skill with the Skill tool when executing.
+This skill is executed by the DBA subagent (subagent_type=dba). Load this skill with the Skill tool when executing.
+
+## Dispatch Instructions (MUST be followed when the PM/upper-level orchestrator launches this skill)
+1. Launch method: use the task tool to launch a subagent; subagent_type MUST be `dba`; the PM or orchestrator must not execute this skill's content on its own.
+2. The task prompt MUST carry the context (indispensable): the absolute path of the project root (projectRoot), the project English abbreviation ({project abbreviation}), the current version ({current version}), the original user input $ARGUMENTS (including the file paths mentioned by the user), and the skill name (impm-dbd-create; require the subagent to load this skill with the Skill tool first before executing).
+3. Completion requirement: wait for the subagent to return the completion result, verify the output files and the version_progress.md progress records, and only proceed to the next step when everything is correct.
 
 ## Key Variables and How to Get Them
 | Variable | Description | How to get it |

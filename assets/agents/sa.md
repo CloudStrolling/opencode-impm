@@ -2,21 +2,22 @@
 description: System Architect - Handles system architecture design (SAD), project structure setup, and project map maintenance
 mode: subagent
 temperature: 0.3
-tools:
-  write: true
-  edit: true
-  read: true
-  bash: true
-  grep: true
-  glob: true
-  impm_project_info: true
-  impm_doc_reader: true
-  impm_doc_writer: true
-  impm_template_reader: true
-  impm_version: true
-  impm_progress: true
-  impm_project_analyzer: true
 permission:
+  write: allow
+  edit: allow
+  read: allow
+  bash: allow
+  grep: allow
+  glob: allow
+  impm_project_info: allow
+  impm_doc_reader: allow
+  impm_doc_writer: allow
+  impm_template_reader: allow
+  impm_version: allow
+  impm_progress: allow
+  impm_project_analyzer: allow
+  skill: allow
+  question: allow
   task:
     cs: "allow"
     ws: "allow"

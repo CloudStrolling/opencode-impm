@@ -15,7 +15,12 @@ description: Reads the TESTCASE-TEMPLATE.MD template, determines test cases from
 - When the test case document and automated test scripts need to be created or completed.
 
 ## Executing Agent
-This skill is executed by the TE subagent. Load this skill with the Skill tool when executing.
+This skill is executed by the TE subagent (subagent_type=te). Load this skill with the Skill tool when executing.
+
+## Dispatch Instructions (MUST be followed when the PM/upper-level orchestrator launches this skill)
+1. Launch method: use the task tool to launch a subagent; subagent_type MUST be `te`; the PM or orchestrator must not execute this skill's content on its own.
+2. The task prompt MUST carry the context (indispensable): the absolute path of the project root (projectRoot), the project English abbreviation ({project abbreviation}), the current version ({current version}), the original user input $ARGUMENTS (including the file paths mentioned by the user), and the skill name (impm-init-testcase; require the subagent to load this skill with the Skill tool first before executing).
+3. Completion requirement: wait for the subagent to return the completion result, verify the output files and the version_progress.md progress records, and only proceed to the next step when everything is correct.
 
 ## Key Variables and How to Get Them
 | Variable | Description | How to get it |
@@ -44,11 +49,11 @@ Read the existing documents via impm_doc_reader (focus on the PRD and LLD, and t
 ### Step 3: Write the version document and copy the master document
 Call impm_doc_writer(projectRoot, testcase, {project Chinese name}, {current version}, {task ID}, main, content): write the version document docs/{project abbreviation}-v0.0.1/{project abbreviation}-testcase-v0.0.1.md, and copy it to the master document docs/{project abbreviation}-testcase.md (create the master document if it does not exist). Verify both files exist and their contents match.
 
-### Step 4: Write the test functions
-Write the test functions according to each case in the test case document: test functions correspond one-to-one with the cases, and the function names, input parameters, and assertions are consistent with the cases' test steps and expected results.
+### Step 4: Write the unit test functions
+For the unit test part of the test cases, write the unit test functions: test functions correspond one-to-one with the cases, and the function names, input parameters, and assertions are consistent with the cases' test steps and expected results.
 
-### Step 5: Generate the automated test scripts
-Based on the completed test functions and the expected inputs, outputs, and result values, generate automated test scripts and put them uniformly under scripts/API-TEST/; the scripts should be directly executable and output the pass/fail result for each case.
+### Step 5: Write the API test scripts
+For the API interface tests in the test cases, write the API test scripts and put them uniformly under scripts/API-TEST/; the scripts should be directly executable and output the pass/fail result for each case.
 
 ### Step 6: Record progress
 Call impm_progress(projectRoot, {project abbreviation}, {current version}, add, impm-init-testcase, completed) to record this step as complete.

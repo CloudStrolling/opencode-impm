@@ -15,7 +15,12 @@ description: Brings the current project under git management, reads the GITIGNOR
 - When the project is not yet under git management and a git baseline and initial commit need to be established.
 
 ## Executing Agent
-This skill is executed by the SCM subagent. Load this skill with the Skill tool when executing.
+This skill is executed by the SCM subagent (subagent_type=scm). Load this skill with the Skill tool when executing.
+
+## Dispatch Instructions (MUST be followed when the PM/upper-level orchestrator launches this skill)
+1. Launch method: use the task tool to launch a subagent; subagent_type MUST be `scm`; the PM or orchestrator must not execute this skill's content on its own.
+2. The task prompt MUST carry the context (indispensable): the absolute path of the project root (projectRoot), the project English abbreviation ({project abbreviation}), the current version ({current version}), the original user input $ARGUMENTS (including the file paths mentioned by the user), and the skill name (impm-init-git; require the subagent to load this skill with the Skill tool first before executing).
+3. Completion requirement: wait for the subagent to return the completion result, verify the output files and the version_progress.md progress records, and only proceed to the next step when everything is correct.
 
 ## Key Variables and How to Get Them
 | Variable | Description | How to get it |

@@ -2,22 +2,23 @@
 description: Business Analyst - Creates the User Requirements Specification (URS) and Product Requirements Document (PRD)
 mode: subagent
 temperature: 0.4
-tools:
-  write: true
-  edit: true
-  read: true
-  bash: true
-  task: true
-  grep: true
-  glob: true
-  websearch: true
-  impm_project_info: true
-  impm_doc_reader: true
-  impm_doc_writer: true
-  impm_template_reader: true
-  impm_version: true
-  impm_progress: true
 permission:
+  write: allow
+  edit: allow
+  read: allow
+  bash: allow
+  grep: allow
+  glob: allow
+  websearch: allow
+  impm_project_info: allow
+  impm_doc_reader: allow
+  impm_doc_writer: allow
+  impm_template_reader: allow
+  impm_version: allow
+  impm_progress: allow
+  webfetch: allow
+  skill: allow
+  question: allow
   task:
     cs: "allow"
     ws: "allow"

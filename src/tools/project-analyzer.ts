@@ -174,6 +174,9 @@ export function projectAnalyzerExecute(args: {
                 continue;
             }
             for (const f of listFilesRecursive(full)) {
+                if (typeof f !== "string") {
+                    continue;
+                }
                 const parts = f.split(/[\\/]/);
                 if (parts.some((p) => excluded.has(p))) {
                     continue;

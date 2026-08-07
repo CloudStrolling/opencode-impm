@@ -2,12 +2,13 @@
 description: Web Searcher - Queries official documentation, application examples, and technical materials as requested, verifying version compatibility
 mode: subagent
 temperature: 0.1
-tools:
-  websearch: true
-  webfetch: true
-  impm_doc_reader: true
-  impm_progress: true
 permission:
+  websearch: allow
+  webfetch: allow
+  impm_doc_reader: allow
+  impm_progress: allow
+  skill: allow
+  question: allow
   task:
     "*": "deny"
 ---

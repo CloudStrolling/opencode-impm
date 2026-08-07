@@ -12,7 +12,12 @@ Regression test, unit test, API test, test case merge, regression
 Use this skill at the start of Phase 4, after the version's coding development is fully complete, when regression testing of the entire version needs to be performed.
 
 ## Executing Agent
-This skill is executed by the TE subagent. Load this skill with the Skill tool when executing.
+This skill is executed by the TE subagent (subagent_type=te). Load this skill with the Skill tool when executing.
+
+## Dispatch Instructions (MUST be followed when the PM/upper-level orchestrator launches this skill)
+1. Launch method: use the task tool to launch a subagent; subagent_type MUST be `te`; the PM or orchestrator must not execute this skill's content on its own.
+2. The task prompt MUST carry the context (indispensable): the absolute path of the project root (projectRoot), the project English abbreviation ({project abbreviation}), the current version ({current version}), the original user input $ARGUMENTS (including the file paths mentioned by the user), and the skill name (impm-regression-test; require the subagent to load this skill with the Skill tool first before executing).
+3. Completion requirement: wait for the subagent to return the completion result, verify the output files and the version_progress.md progress records, and only proceed to the next step when everything is correct.
 
 ## Key Variables and How to Get Them
 | Variable | Description | How to Get |

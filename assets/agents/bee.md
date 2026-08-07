@@ -2,17 +2,18 @@
 description: Back-End Engineer - Handles back-end business coding, interface planning, and development
 mode: subagent
 temperature: 0.2
-tools:
-  write: true
-  edit: true
-  read: true
-  bash: true
-  grep: true
-  glob: true
-  impm_doc_reader: true
-  impm_context_builder: true
-  impm_progress: true
 permission:
+  write: allow
+  edit: allow
+  read: allow
+  bash: allow
+  grep: allow
+  glob: allow
+  impm_doc_reader: allow
+  impm_context_builder: allow
+  impm_progress: allow
+  skill: allow
+  question: allow
   task:
     cs: "allow"
     ws: "allow"

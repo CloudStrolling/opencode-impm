@@ -2,17 +2,18 @@
 description: Front-End Engineer - Designs and implements modern, aesthetically pleasing front-end pages and interactions
 mode: subagent
 temperature: 0.3
-tools:
-  write: true
-  edit: true
-  read: true
-  bash: true
-  grep: true
-  glob: true
-  impm_doc_reader: true
-  impm_context_builder: true
-  impm_progress: true
 permission:
+  write: allow
+  edit: allow
+  read: allow
+  bash: allow
+  grep: allow
+  glob: allow
+  impm_doc_reader: allow
+  impm_context_builder: allow
+  impm_progress: allow
+  skill: allow
+  question: allow
   task:
     cs: "allow"
     ws: "allow"

@@ -1,12 +1,13 @@
 ---
 name: impm-init-lld
-description: Reads the LLD-TEMPLATE.MD template, reverse-engineers the Low-Level Design Document from the project code, documents, PRD, and SAD, writes the version document and copies it to the master document docs/{project abbreviation}-lld.md. Use when the detailed design needs to be written during the initialization phase.
+description: Reads the LLD-TEMPLATE.MD template, reverse-engineers the detailed design document of the overall business logic (module division, business processes, core business logic, etc., excluding interface detail design) from the project code, documents, PRD, and SAD, writes the version document and copies it to the master document docs/{project abbreviation}-lld.md. Use when the detailed design needs to be written during the initialization phase.
 ---
 
 # impm-init-lld Skill
 ## Trigger Words
 - LLD
 - Detailed design
+- Business logic design
 - Class diagram
 - Sequence diagram
 
@@ -15,7 +16,12 @@ description: Reads the LLD-TEMPLATE.MD template, reverse-engineers the Low-Level
 - When the Low-Level Design Document (LLD) needs to be created or completed.
 
 ## Executing Agent
-This skill is executed by the TL subagent. Load this skill with the Skill tool when executing.
+This skill is executed by the TL subagent (subagent_type=tl). Load this skill with the Skill tool when executing.
+
+## Dispatch Instructions (MUST be followed when the PM/upper-level orchestrator launches this skill)
+1. Launch method: use the task tool to launch a subagent; subagent_type MUST be `tl`; the PM or orchestrator must not execute this skill's content on its own.
+2. The task prompt MUST carry the context (indispensable): the absolute path of the project root (projectRoot), the project English abbreviation ({project abbreviation}), the current version ({current version}), the original user input $ARGUMENTS (including the file paths mentioned by the user), and the skill name (impm-init-lld; require the subagent to load this skill with the Skill tool first before executing).
+3. Completion requirement: wait for the subagent to return the completion result, verify the output files and the version_progress.md progress records, and only proceed to the next step when everything is correct.
 
 ## Key Variables and How to Get Them
 | Variable | Description | How to get it |
@@ -34,11 +40,11 @@ This skill is executed by the TL subagent. Load this skill with the Skill tool w
 
 ## Execution Steps
 ### Step 1: Read the template
-Call impm_template_reader(projectRoot, LLD-TEMPLATE.MD) to read the Low-Level Design Document template, and clarify the template chapters: module overview, class diagrams, sequence diagrams, interface implementation details, exception handling strategy, unit test strategy, etc.
+Call impm_template_reader(projectRoot, LLD-TEMPLATE.MD) to read the detailed design document template, and clarify the template chapters: module overview, module division and responsibilities, class diagrams, core business process sequence diagrams, state diagrams, core business logic, business rules and constraints, business data flows, exception handling strategy, unit test strategy, etc. Note: the LLD focuses on the overall business logic design; interface definitions, request/response parameters, and other interface details are the responsibility of the API Design Document and are not repeated in the LLD.
 
 ### Step 2: Reverse-engineer the detailed design
-Read the existing documents via impm_doc_reader (focus on the PRD and SAD, and the API definitions in docs/{project abbreviation}-api.md), and fill in the LLD in the template format combined with the current project code and documents:
-- Existing project: reverse-engineer the module division, class diagrams, sequence diagrams, and implementation details from the existing code (classes, modules, call chains).
+Read the existing documents via impm_doc_reader (focus on the PRD and SAD, and refer to docs/{project abbreviation}-api.md when necessary to understand the overall interface picture), and reverse-engineer the module division, business processes, core business logic, and business rules from the business logic perspective combined with the current project code and documents, filling in the LLD in the template format:
+- Existing project: reverse-engineer the module division, class diagrams, core business process sequence diagrams, and business rules from the existing code (classes, modules, call chains, business processing flows).
 - Empty project: write an empty document per the template structure, keeping the chapter titles and filling the content with "to be filled" or empty values.
 
 ### Step 3: Write the version document and copy the master document
@@ -52,6 +58,6 @@ Call impm_progress(projectRoot, {project abbreviation}, {current version}, add, 
 - docs/{project abbreviation}-lld.md
 
 ## Next Steps
-- To continue with the next step, enter /impm-init-testcase
+- To continue with the next step, enter /impm-init-task
 - To continue with all remaining steps of this phase, enter /impm-init
 <!-- SPDX-License-Identifier: Apache-2.0 / Copyright 2026 jenemy8023 <jenemy8023@163.com> -->

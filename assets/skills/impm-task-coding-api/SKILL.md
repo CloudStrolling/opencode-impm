@@ -14,7 +14,12 @@ description: Determines whether the current task requires changes to the API des
 Use this skill before coding backend tasks in projects with separated frontend and backend, when it needs to determine whether the API design requires changes based on the task context, and synchronize the version API design document accordingly.
 
 ## Executing Agent
-This skill is executed by the tl subagent. Load this skill with the Skill tool when executing.
+This skill is executed by the TL subagent (subagent_type=tl). Load this skill with the Skill tool when executing.
+
+## Dispatch Instructions (MUST be followed when the PM/upper-level orchestrator launches this skill)
+1. Launch method: use the task tool to launch a subagent; subagent_type MUST be `tl`; the PM or orchestrator must not execute this skill's content on its own.
+2. The task prompt MUST carry the context (indispensable): the absolute path of the project root (projectRoot), the project English abbreviation ({project abbreviation}), the current version ({current version}), the original user input $ARGUMENTS (including the file paths mentioned by the user), and the skill name (impm-task-coding-api; require the subagent to load this skill with the Skill tool first before executing), and the task ID (taskId, extracted from $ARGUMENTS; when missing, use impm_task_manager to query the next executable task).
+3. Completion requirement: wait for the subagent to return the completion result, verify the output files and the version_progress.md progress records, and only proceed to the next step when everything is correct.
 
 ## Key Variables and How to Get Them
 | Variable | Description | How to Get |

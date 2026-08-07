@@ -15,7 +15,12 @@ description: Queries official documentation and usage of third-party packages, m
 Use this skill during the coding development phase when the official documentation, usage, and examples of third-party middleware, packages, or SDKs used by the task need to be queried, or when web resources related to the task need to be searched.
 
 ## Executing Agent
-This skill is executed by the ws subagent. Load this skill with the Skill tool when executing.
+This skill is executed by the WS subagent (subagent_type=ws). Load this skill with the Skill tool when executing.
+
+## Dispatch Instructions (MUST be followed when the PM/upper-level orchestrator launches this skill)
+1. Launch method: use the task tool to launch a subagent; subagent_type MUST be `ws`; the PM or orchestrator must not execute this skill's content on its own.
+2. The task prompt MUST carry the context (indispensable): the absolute path of the project root (projectRoot), the project English abbreviation ({project abbreviation}), the current version ({current version}), the original user input $ARGUMENTS (including the file paths mentioned by the user), and the skill name (impm-task-coding-ws; require the subagent to load this skill with the Skill tool first before executing), and the task ID (taskId, extracted from $ARGUMENTS; when missing, use impm_task_manager to query the next executable task).
+3. Completion requirement: wait for the subagent to return the completion result, verify the output files and the version_progress.md progress records, and only proceed to the next step when everything is correct.
 
 ## Key Variables and How to Get Them
 | Variable | Description | How to Get |

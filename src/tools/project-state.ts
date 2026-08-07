@@ -80,33 +80,49 @@ export const isInitDefinition = {
 };
 
 export function isInitExecute(args: { projectRoot: string }) {
-    const root = args.projectRoot;
-    const projectMdPath = join(root, "docs", "project.md");
-    const sadMdPath = join(root, "docs", "sad.md");
-
-    const projectMdExists = existsSync(projectMdPath);
-    const sadMdExists = existsSync(sadMdPath);
-
-    let files: string[] = [];
     try {
-        files = listFilesRecursive(root).filter((f) => {
-            const parts = f.split(/[\\/]/);
-            return !parts.some((p) => EXCLUDED_DIRS.has(p));
-        });
-    } catch {
-        files = [];
-    }
+        const root = args?.projectRoot?.trim();
+        if (!root) {
+            return {
+                success: false,
+                error: "Missing required argument projectRoot (the absolute path of the project root directory).",
+            };
+        }
+        const projectMdPath = join(root, "docs", "project.md");
+        const sadMdPath = join(root, "docs", "sad.md");
 
-    return {
-        success: true,
-        initialized: projectMdExists && sadMdExists,
-        projectMd: projectMdExists,
-        sadMd: sadMdExists,
-        emptyProject: files.length === 0,
-        sourceFileCount: files.length,
-        hint:
-            projectMdExists && sadMdExists
-                ? "The project is already initialized; enter the corresponding workflow phase directly."
-                : "The project is not initialized; run /impm-init to complete initialization. Empty projects are written with the standard structure, while existing projects are reverse-engineered and completed from the existing code.",
-    };
+        const projectMdExists = existsSync(projectMdPath);
+        const sadMdExists = existsSync(sadMdPath);
+
+        let files: string[] = [];
+        try {
+            files = listFilesRecursive(root).filter((f) => {
+                if (typeof f !== "string") {
+                    return false;
+                }
+                const parts = f.split(/[\\/]/);
+                return !parts.some((p) => EXCLUDED_DIRS.has(p));
+            });
+        } catch {
+            files = [];
+        }
+
+        return {
+            success: true,
+            initialized: projectMdExists && sadMdExists,
+            projectMd: projectMdExists,
+            sadMd: sadMdExists,
+            emptyProject: files.length === 0,
+            sourceFileCount: files.length,
+            hint:
+                projectMdExists && sadMdExists
+                    ? "The project is already initialized; enter the corresponding workflow phase directly."
+                    : "The project is not initialized; run /impm-init to complete initialization. Empty projects are written with the standard structure, while existing projects are reverse-engineered and completed from the existing code.",
+        };
+    } catch (err) {
+        return {
+            success: false,
+            error: err instanceof Error ? err.message : String(err),
+        };
+    }
 }

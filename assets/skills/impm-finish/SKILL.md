@@ -12,7 +12,27 @@ description: Orchestrates all steps of the regression testing and version docume
 Use this skill when the Phase 3 coding development is fully complete and all tasks in the version have been committed, and regression testing and version documentation need to be performed. This skill is the orchestration entry of Phase 4 and is responsible for strictly dispatching the other 8 skills in order.
 
 ## Executing Agent
-This skill is executed by the PM subagent. Load this skill with the Skill tool when executing.
+This skill is executed by the Project Manager (master agent) (orchestration). Load this skill with the Skill tool when executing. Internal sub-steps MUST be dispatched to the corresponding subagents per the "General Dispatch Requirements" below; the PM only schedules, checks, and decides.
+
+## General Dispatch Requirements (all sub-steps of this skill MUST comply)
+1. Launch method: launch the corresponding subagent via the task tool for each sub-step (subagent_type MUST exactly match the mapping table below) to execute the corresponding skill; the PM must not execute the specific work in place of the subagents (the only exception: steps marked "executed directly by the PM" in the mapping table).
+2. The task prompt MUST carry the context (indispensable): the absolute path of the project root (projectRoot), the project English abbreviation ({project abbreviation}), the current version ({current version}), the original user input $ARGUMENTS (including the file paths mentioned by the user), the skill name (require the subagent to load the skill with the Skill tool first before executing), and the task ID ({task ID}, applicable in the coding phase).
+3. Task prompt template (fill in for each sub-step accordingly):
+   "Execute impm's {skill name} skill as {subagent Chinese name} (subagent_type={x}); first load the skill {skill name} with the Skill tool; the context that MUST be carried: project root={absolute path}, project English abbreviation={abbreviation}, current version={version}, user input={original text}, task ID={taskId} (if applicable); after completing all operations per the skill's execution steps, return: the list of output file paths and the progress status of {skill name} in version_progress.md."
+4. Completion verification: after each subagent returns, verify that the output files exist and version_progress.md has recorded the step status; only proceed to the next step when everything is correct.
+5. Order discipline: strictly follow the execution order; do not skip, reorder, parallelize, or merge any step; if any sub-step fails, first locate the cause and roll back and redo when necessary; never bypass it.
+
+### Sub-step Subagent Mapping Table (impm-finish)
+| Sub-step | Skill name | subagent_type |
+|----|----|----|
+| 1 | impm-regression-test | te |
+| 2 | impm-coding-comment | dw |
+| 3 | impm-coding-review | tl |
+| 4 | impm-project-update | sa |
+| 5 | impm-doc-merge | dw |
+| 6 | impm-doc-update | dw |
+| 7 | impm-deploy-update | dw |
+| 8 | impm-git-merge | scm |
 
 ## Key Variables and How to Get Them
 | Variable | Description | How to Get |

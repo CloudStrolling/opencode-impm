@@ -1,4 +1,20 @@
 /**
+ * Copyright 2026 jenemy8023 <jenemy8023@163.com>
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
  * impm standard path utilities: unify the paths and naming conventions for all documents, scripts, and deployment files.
  */
 
@@ -196,17 +212,20 @@ export function isDirEmpty(dir: string): boolean {
     return entries.length === 0;
 }
 
-/** Recursively list all files under a directory */
-export function listFilesRecursive(dir: string): string[] {
-    if (!existsSync(dir)) {
+/** Recursively list all files under a directory (defensive: skip invalid entries, limit the recursion depth to prevent symlink/junction loops) */
+export function listFilesRecursive(dir: string, depth = 0): string[] {
+    if (typeof dir !== "string" || !dir || !existsSync(dir) || depth > 64) {
         return [];
     }
     const files: string[] = [];
     for (const name of readdirSync(dir)) {
+        if (typeof name !== "string") {
+            continue;
+        }
         const full = join(dir, name);
         try {
             if (statSync(full).isDirectory()) {
-                files.push(...listFilesRecursive(full));
+                files.push(...listFilesRecursive(full, depth + 1));
             } else {
                 files.push(full);
             }

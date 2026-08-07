@@ -83,10 +83,10 @@ PM → BA / SA / TL / DBA / TE / SCM / DW / CS / WS / FEE / BEE / SSE
 
 **File:** `assets/agents/tl.md`
 
-**Skills executed:** `impm-init-api`, `impm-init-lld`, `impm-api-create`, `impm-lld-create`, `impm-task-create`, `impm-task-coding-context`, `impm-task-coding-api`, `impm-coding-review`
+**Skills executed:** `impm-init-api`, `impm-init-lld`, `impm-init-task`, `impm-api-create`, `impm-lld-create`, `impm-task-create`, `impm-task-coding-context`, `impm-task-coding-api`, `impm-coding-review`
 
 **Responsibilities:**
-- Writes the API Design Document and the Low-Level Design Document (LLD)
+- Writes the API Design Document and the Low-Level Design Document (LLD, focusing on the overall business logic design; interface details are the responsibility of the API document)
 - Breaks development requirements down into an executable task list (task JSON, including upstream/downstream dependencies)
 - Collects the requirement context during the coding phase (context.md)
 - Performs code quality review (security vulnerabilities, performance traps, code quality, architecture compliance, test coverage)

@@ -14,10 +14,12 @@ description: Implements the coding according to the task's taskType via the BEE/
 Use this skill when the context, database design, API design, and test cases of the current task are ready, and the coding needs to be implemented according to the task's taskType.
 
 ## Executing Agent
-This skill is executed by the sse, fee, and bee subagents. Load this skill with the Skill tool when executing. The dispatcher (impm-task-coding) selects the corresponding agent according to the task's taskType:
-- taskType=backend: executed by the bee subagent;
-- taskType=frontend: executed by the fee subagent;
-- taskType=common: executed by the sse subagent.
+This skill is executed by the sse, fee, and bee subagents (selected by task taskType: common→sse, frontend→fee, backend→bee). Load this skill with the Skill tool when executing.
+
+## Dispatch Instructions (MUST be followed when the PM/impm-task-coding launches this skill)
+1. Launch method: use the task tool to launch a subagent; subagent_type is determined by the task taskType: common→`sse`, frontend→`fee`, backend→`bee`; the dispatcher must not execute this skill's content on its own.
+2. The task prompt MUST carry the context (indispensable): the absolute path of the project root (projectRoot), the project English abbreviation ({project abbreviation}), the current version ({current version}), the task ID (taskId), the skill name (impm-task-coding-code; require the subagent to load this skill with the Skill tool first before executing), and the task taskType.
+3. Completion requirement: wait for the subagent to return the completion result, verify the code output and requirement coverage, and only proceed when everything is correct.
 
 ## Key Variables and How to Get Them
 | Variable | Description | How to Get |

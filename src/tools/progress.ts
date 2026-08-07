@@ -44,6 +44,7 @@ export const KNOWN_STEP_NAMES: string[] = [
     "impm-init-dbd",
     "impm-init-api",
     "impm-init-lld",
+    "impm-init-task",
     "impm-init-testcase",
     "impm-init-commit",
     "impm-docs",

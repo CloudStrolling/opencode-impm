@@ -9,7 +9,7 @@
 opencode-impm is an OpenCode plugin suite that includes:
 
 - **13 professional AI Agents**: uniformly dispatched by the PM (Project Manager); BA / SA / TL / DBA / TE / SCM / DW / CS / WS / FEE / BEE / SSE each play their part.
-- **45 Skills and 45 Commands**: each waterfall step corresponds to one skill and one command, executed strictly in order — no skipping, no out-of-order execution, no parallelism.
+- **46 Skills and 46 Commands**: each waterfall step corresponds to one skill and one command, executed strictly in order — no skipping, no out-of-order execution, no parallelism.
 - **11 Plugin Tools**: document read/write, version management, progress management, task scheduling, context building, project analysis, git operations, etc., invoked by the skills.
 - **10 standard document templates**: URS / PRD / SAD / DBD / API / LLD / TESTCASE / TASK / REVIEW / PROJECT, ensuring a uniform document structure.
 
@@ -27,8 +27,8 @@ opencode-impm is an OpenCode plugin suite that includes:
 opencode-impm/
 ├── assets/                      # Suite assets (copied to .opencode/ on install)
 │   ├── agents/                  # 13 AI Agent definitions (.md)
-│   ├── commands/                # 45 commands (.md)
-│   └── skills/                  # 45 skills (one directory per skill) + template/ templates
+│   ├── commands/                # 46 commands (.md)
+│   └── skills/                  # 46 skills (one directory per skill) + template/ templates
 ├── src/                         # Plugin source (TypeScript)
 │   ├── tools/                   # Implementation of the 11 tools
 │   ├── utils/                   # Path / version / git / project info utilities
@@ -85,14 +85,14 @@ The PM Agent advances through the four phases in order:
 
 | Phase | Orchestrating command | Description |
 | --- | --- | --- |
-| Phase 1: Initialization | `/impm-init` | Initialize the project: determine the project type, create the version directory and progress table, generate the initial URS/PRD/SAD/DBD/API/LLD/test case documents, and commit |
+| Phase 1: Initialization | `/impm-init` | Initialize the project: determine the project type, create the version directory and progress table, generate the initial URS/PRD/SAD/DBD/API/LLD/task list/test case documents, and commit |
 | Phase 2: Requirements Analysis | `/impm-docs` | Confirm the requirements for the current version: create the version branch and version directory, generate URS/PRD, update SAD, generate DBD/API/LLD, create the task list, and commit |
 | Phase 3: Coding Development | `/impm-coding` | Loop through the tasks: collect context → code search → web search → database/API design → test cases → coding → write tests → run tests → commit, until all tasks are complete |
 | Phase 4: Regression Testing and Version Documentation | `/impm-finish` | Regression tests, code comments, code review, project map update, document merging, update readme/agent/deployment documents, merge the main branch |
 
 You can also run a single step command, e.g., `/impm-init-urs`, `/impm-prd-create`, `/impm-task-coding-code`, etc.
 
-## Command List (45)
+## Command List (46)
 
 ### Overall workflow
 
@@ -115,6 +115,7 @@ You can also run a single step command, e.g., `/impm-init-urs`, `/impm-prd-creat
 | `/impm-init-dbd` | Generate the Database Design document and SQL scripts |
 | `/impm-init-api` | Generate the API design document |
 | `/impm-init-lld` | Generate the Low-Level Design document |
+| `/impm-init-task` | Generate the task list (task JSON) |
 | `/impm-init-testcase` | Generate the test case document |
 | `/impm-init-commit` | Commit all deliverables of the initialization phase |
 
@@ -198,7 +199,7 @@ You can also run a single step command, e.g., `/impm-init-urs`, `/impm-prd-creat
 
 ## License
 
-Apache License 2.0
+This project is licensed under the [Apache License 2.0](LICENSE). The complete license text is available in the [LICENSE](LICENSE) file at the repository root.
 
 Copyright 2026 jenemy8023 <jenemy8023@163.com>
 

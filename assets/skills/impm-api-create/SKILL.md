@@ -12,7 +12,12 @@ API design, API, API document, new API, impm-api-create
 Use after the database design has been completed (after impm-dbd-create). Check whether the master API Design Document docs/{project abbreviation}-api.md exists: if it does not exist, the current project needs no API interfaces and this step is skipped; if it exists, complete the new API design for the current version following the API template based on the SAD and the current version PRD, and record this step in the version progress file.
 
 ## Executing Agent
-This skill is executed by the TL subagent. Load this skill with the Skill tool when executing.
+This skill is executed by the TL subagent (subagent_type=tl). Load this skill with the Skill tool when executing.
+
+## Dispatch Instructions (MUST be followed when the PM/upper-level orchestrator launches this skill)
+1. Launch method: use the task tool to launch a subagent; subagent_type MUST be `tl`; the PM or orchestrator must not execute this skill's content on its own.
+2. The task prompt MUST carry the context (indispensable): the absolute path of the project root (projectRoot), the project English abbreviation ({project abbreviation}), the current version ({current version}), the original user input $ARGUMENTS (including the file paths mentioned by the user), and the skill name (impm-api-create; require the subagent to load this skill with the Skill tool first before executing).
+3. Completion requirement: wait for the subagent to return the completion result, verify the output files and the version_progress.md progress records, and only proceed to the next step when everything is correct.
 
 ## Key Variables and How to Get Them
 | Variable | Description | How to get it |

@@ -60,3 +60,5 @@
 > Created: 2026-08-04 12:12:27 | Title: Translate coding+finish skills (@general subagent)
 
 > Sub-session (parent session: ses_035124d15ffenroenugCyij90P)
+
+<!-- SPDX-License-Identifier: Apache-2.0 / Copyright 2026 jenemy8023 <jenemy8023@163.com> -->

@@ -97,9 +97,9 @@ After installation, verify with the following steps:
 
 ```bash
 # 1) Confirm the directory structure
-#    .opencode/commands/  -> 45 commands
+#    .opencode/commands/  -> 46 commands
 #    .opencode/agents/    -> 13 agents
-#    .opencode/skills/    -> 45 skills + template/
+#    .opencode/skills/    -> 46 skills + template/
 #    .opencode/plugins/impm/ -> plugin build artifacts
 
 # 2) Confirm that opencode.json is configured correctly (no plugin registration needed for self-install)

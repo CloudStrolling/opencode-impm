@@ -16,7 +16,12 @@ description: Determines whether the current project has been initialized (whethe
 - When the user asks whether the current project has been initialized and whether it should be handled as an empty project or an existing project.
 
 ## Executing Agent
-This skill is executed by the PM subagent. Load this skill with the Skill tool when executing.
+This skill is executed by the PM subagent (executed directly, no subagent launched). Load this skill with the Skill tool when executing.
+
+## Dispatch Instructions (MUST be followed when launching this skill)
+1. This skill does not launch a subagent; it is executed directly by the PM.
+2. Execution context: the absolute path of the project root (projectRoot); the determination result (empty project/existing project/initialized) MUST be passed as context to the subsequent steps.
+3. Completion requirement: the isinit progress row is backfilled uniformly by the impm-init-version step; after this step, feed the determination conclusion back to the user and the subsequent steps.
 
 ## Key Variables and How to Get Them
 | Variable | Description | How to get it |

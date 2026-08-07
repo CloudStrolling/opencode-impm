@@ -16,7 +16,23 @@ Use when the user requests full impm software engineering workflow development. 
 4. Regression testing and version documentation phase (impm-finish)
 
 ## Executing Agent
-This skill is executed by the PM (Project Manager, master agent), which acts as the scheduling core that starts the subagents to execute the specific skills.
+This skill is executed by the Project Manager (master agent) (orchestration). Load this skill with the Skill tool when executing. Internal sub-steps MUST be dispatched to the corresponding subagents per the "General Dispatch Requirements" below; the PM only schedules, checks, and decides.
+
+## General Dispatch Requirements (all sub-steps of this skill MUST comply)
+1. Launch method: launch the corresponding subagent via the task tool for each sub-step (subagent_type MUST exactly match the mapping table below) to execute the corresponding skill; the PM must not execute the specific work in place of the subagents (the only exception: steps marked "executed directly by the PM" in the mapping table).
+2. The task prompt MUST carry the context (indispensable): the absolute path of the project root (projectRoot), the project English abbreviation ({project abbreviation}), the current version ({current version}), the original user input $ARGUMENTS (including the file paths mentioned by the user), the skill name (require the subagent to load the skill with the Skill tool first before executing), and the task ID ({task ID}, applicable in the coding phase).
+3. Task prompt template (fill in for each sub-step accordingly):
+   "Execute impm's {skill name} skill as {subagent Chinese name} (subagent_type={x}); first load the skill {skill name} with the Skill tool; the context that MUST be carried: project root={absolute path}, project English abbreviation={abbreviation}, current version={version}, user input={original text}, task ID={taskId} (if applicable); after completing all operations per the skill's execution steps, return: the list of output file paths and the progress status of {skill name} in version_progress.md."
+4. Completion verification: after each subagent returns, verify that the output files exist and version_progress.md has recorded the step status; only proceed to the next step when everything is correct.
+5. Order discipline: strictly follow the execution order; do not skip, reorder, parallelize, or merge any step; if any sub-step fails, first locate the cause and roll back and redo when necessary; never bypass it.
+
+### Sub-step Subagent Mapping Table (impm)
+| Sub-step | Skill name | subagent_type |
+|----|----|----|
+| Phase 1 | impm-init | PM (orchestration, dispatches internally) |
+| Phase 2 | impm-docs | PM (orchestration, dispatches internally) |
+| Phase 3 | impm-coding | PM (orchestration, dispatches internally) |
+| Phase 4 | impm-finish | PM (orchestration, dispatches internally) |
 
 ## Key Variables and How to Get Them
 | Variable | Description | How to get it |
@@ -39,7 +55,7 @@ This skill is executed by the PM (Project Manager, master agent), which acts as 
 1. Load and execute the impm-init skill using the Skill tool.
 2. First run impm-init-isinit to determine whether the project has been initialized:
    - If docs/project.md and docs/sad.md both exist and are non-empty, the project is initialized; skip the entire initialization phase;
-   - If it is an empty project or an existing project, execute all initialization steps in sequence.
+   - If it is an empty project or an existing project, execute all initialization steps in sequence: impm-init-isinit → impm-init-git → impm-init-project → impm-init-version → impm-init-urs → impm-init-prd → impm-init-sad → impm-init-dbd → impm-init-api → impm-init-lld → impm-init-task → impm-init-testcase → impm-init-commit.
 3. After the initialization phase completes, check version_progress.md to confirm the initialization steps have been recorded.
 
 ### Phase 2: Requirements Analysis (impm-docs)

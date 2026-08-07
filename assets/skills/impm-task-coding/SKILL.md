@@ -14,7 +14,28 @@ description: Single-task coding orchestration skill; dispatches the context/cs/w
 Use this skill when impm-coding has obtained the next executable task via impm_task_manager (action=next) and all coding development steps of that task (from context collection to passing tests) need to be completed.
 
 ## Executing Agent
-This skill is executed by the pm subagent. Load this skill with the Skill tool when executing.
+This skill is executed by the Project Manager (master agent) (orchestration). Load this skill with the Skill tool when executing. Internal sub-steps MUST be dispatched to the corresponding subagents per the "General Dispatch Requirements" below; the PM only schedules, checks, and decides.
+
+## General Dispatch Requirements (all sub-steps of this skill MUST comply)
+1. Launch method: launch the corresponding subagent via the task tool for each sub-step (subagent_type MUST exactly match the mapping table below) to execute the corresponding skill; the PM must not execute the specific work in place of the subagents (the only exception: steps marked "executed directly by the PM" in the mapping table).
+2. The task prompt MUST carry the context (indispensable): the absolute path of the project root (projectRoot), the project English abbreviation ({project abbreviation}), the current version ({current version}), the original user input $ARGUMENTS (including the file paths mentioned by the user), the skill name (require the subagent to load the skill with the Skill tool first before executing), and the task ID ({task ID}, applicable in the coding phase).
+3. Task prompt template (fill in for each sub-step accordingly):
+   "Execute impm's {skill name} skill as {subagent Chinese name} (subagent_type={x}); first load the skill {skill name} with the Skill tool; the context that MUST be carried: project root={absolute path}, project English abbreviation={abbreviation}, current version={version}, user input={original text}, task ID={taskId} (if applicable); after completing all operations per the skill's execution steps, return: the list of output file paths and the progress status of {skill name} in version_progress.md."
+4. Completion verification: after each subagent returns, verify that the output files exist and version_progress.md has recorded the step status; only proceed to the next step when everything is correct.
+5. Order discipline: strictly follow the execution order; do not skip, reorder, parallelize, or merge any step; if any sub-step fails, first locate the cause and roll back and redo when necessary; never bypass it.
+
+### Sub-step Subagent Mapping Table (impm-task-coding)
+| Sub-step | Skill name | subagent_type |
+|----|----|----|
+| 3 | impm-task-coding-context | tl |
+| 4 | impm-task-coding-cs | cs |
+| 5 | impm-task-coding-ws | ws |
+| 6 | impm-task-coding-dbd | dba |
+| 7 | impm-task-coding-api | tl (as needed) |
+| 8 | impm-task-coding-testcase | te |
+| 9 | impm-task-coding-code | sse/fee/bee (by taskType) |
+| 10 | impm-task-coding-writetest | te |
+| 11 | impm-task-coding-runtest | te |
 
 ## Key Variables and How to Get Them
 | Variable | Description | How to Get |

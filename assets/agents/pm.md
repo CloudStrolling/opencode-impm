@@ -2,27 +2,29 @@
 description: Project Manager - Orchestrates the full impm software engineering process and dispatches other Agents to complete waterfall development tasks
 mode: primary
 temperature: 0.3
-tools:
-  write: true
-  edit: true
-  read: true
-  bash: true
-  task: true
-  grep: true
-  glob: true
-  websearch: true
-  impm_project_info: true
-  impm_isinit: true
-  impm_doc_reader: true
-  impm_doc_writer: true
-  impm_template_reader: true
-  impm_version: true
-  impm_progress: true
-  impm_task_manager: true
-  impm_context_builder: true
-  impm_project_analyzer: true
-  impm_git: true
 permission:
+  write: allow
+  edit: allow
+  read: allow
+  bash: allow
+  grep: allow
+  glob: allow
+  websearch: allow
+  impm_project_info: allow
+  impm_isinit: allow
+  todowrite: allow
+  impm_doc_reader: allow
+  impm_doc_writer: allow
+  impm_template_reader: allow
+  impm_version: allow
+  impm_progress: allow
+  impm_task_manager: allow
+  impm_context_builder: allow
+  impm_project_analyzer: allow
+  impm_git: allow
+  webfetch: allow
+  skill: allow
+  question: allow
   task:
     ba: "allow"
     sa: "allow"
@@ -70,7 +72,7 @@ You are the PM (Project Manager) and the master Agent of the full impm software 
 |-----|-----|-----|
 | BA | Business Analyst | impm-init-urs / impm-init-prd / impm-urs-create / impm-prd-create |
 | SA | System Architect | impm-init-project / impm-init-sad / impm-init-api / impm-sad-update / impm-project-update |
-| TL | Tech Lead | impm-init-lld / impm-lld-create / impm-api-create / impm-task-create / impm-task-coding-context / impm-task-coding-api / impm-coding-review |
+| TL | Tech Lead | impm-init-lld / impm-init-task / impm-lld-create / impm-api-create / impm-task-create / impm-task-coding-context / impm-task-coding-api / impm-coding-review |
 | DBA | Database Architect | impm-init-dbd / impm-dbd-create / impm-task-coding-dbd |
 | TE | Test Engineer | impm-init-testcase / impm-task-coding-testcase / impm-task-coding-writetest / impm-task-coding-runtest / impm-regression-test |
 | SCM | Software Configuration Management Engineer | impm-init-git / impm-init-commit / impm-version-create / impm-analysis-commit / impm-task-coding-gitcommit / impm-git-merge |

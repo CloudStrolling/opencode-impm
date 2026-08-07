@@ -18,9 +18,10 @@
  * opencode-impm plugin entry
  *
  * This is the entry file of the "I am the Project Manager" (AI Project Manager) OpenCode plugin.
- * The plugin registers 11 custom tools: project information, initialization determination, document
+ * The plugin registers 14 custom tools: project information, initialization determination, document
  * read/write, template reading, version management, progress management, task management, context
- * building, project analysis, and git operations.
+ * building, project analysis, git operations, and the 3 prompt-recorder built-in tools (prompt
+ * recording, token backfill, conversation export).
  *
  * Built-in feature: prompt-recorder (prompt recording + conversation export, including a
  * chat.message hook, an event hook, and 3 manual tools: impm_prompt_record,
@@ -60,6 +61,40 @@ function createArraySchema(description: string) {
     };
 }
 
+/**
+ * Tool result adaptation: the plugin tool bridge layer (tool/registry.ts) of
+ * opencode v1.18+ only accepts two result shapes, a string or { output: string },
+ * and drops all other fields; returning a plain object causes output=undefined,
+ * which triggers a crash in the truncate layer's text.split
+ * (Cannot read properties of undefined (reading 'split')).
+ * Uniformly serialize object results into an output string.
+ */
+function toToolResult(result: unknown): unknown {
+    if (typeof result === "string") {
+        return result;
+    }
+    if (result && typeof result === "object") {
+        const r = result as Record<string, unknown>;
+        if (typeof r.output === "string") {
+            return result;
+        }
+    }
+    return { output: JSON.stringify(result, null, 2) };
+}
+
+/** Wrap a tool definition: convert the execute return value into the shape compatible with the opencode bridge layer */
+function wrapToolResult(def: {
+    description?: string;
+    args?: Record<string, unknown>;
+    execute: (args: Record<string, unknown>) => Promise<unknown> | unknown;
+}) {
+    const execute = def.execute;
+    return {
+        ...def,
+        execute: async (args: Record<string, unknown>) => toToolResult(await execute(args)),
+    };
+}
+
 interface ToolContext {
     project: { path: string };
     directory: string;
@@ -76,14 +111,7 @@ export default async function impmPlugin(context: ToolContext) {
     // Built-in feature: prompt-recorder (prompt recording + conversation export, including hooks and 3 manual tools)
     const promptRecorder = await createPromptRecorder(projectRoot);
 
-    return {
-        /** chat.message hook: automatically records the user prompt to prompts.md */
-        "chat.message": promptRecorder.chatMessage,
-        /** Event hook: automatically backfills the tokens and exports the conversation when the main session turn ends */
-        event: promptRecorder.event,
-
-        /** Custom tool registry */
-        tool: {
+    const tools = {
             /** Project information tool - parses the project basic information from docs/project.md */
             impm_project_info: {
                 description: projectInfoDefinition.description,
@@ -366,7 +394,16 @@ export default async function impmPlugin(context: ToolContext) {
 
             /** Prompt recording tool (prompt-recorder built-in feature) - exports the conversation snapshot */
             impm_prompt_export: promptRecorder.tool.impm_prompt_export,
-        },
+        };
+
+    return {
+        /** chat.message hook: automatically records the user prompt to prompts.md */
+        "chat.message": promptRecorder.chatMessage,
+        /** Event hook: automatically backfills the tokens and exports the conversation when the main session turn ends */
+        event: promptRecorder.event,
+        tool: Object.fromEntries(
+            Object.entries(tools).map(([id, def]) => [id, wrapToolResult(def)]),
+        ),
     };
 }
 

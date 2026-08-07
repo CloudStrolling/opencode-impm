@@ -12,7 +12,12 @@ User Requirement Specification, URS, generate requirements, requirements collect
 Use after the version has been created (after impm-version-create). Based on the user's requirement input, generate the User Requirement Specification (URS) in the template format, write it to docs/{project abbreviation}-v{current version}/{project abbreviation}-urs-v{current version}.md, and record this step in the version progress file.
 
 ## Executing Agent
-This skill is executed by the BA subagent. Load this skill with the Skill tool when executing.
+This skill is executed by the BA subagent (subagent_type=ba). Load this skill with the Skill tool when executing.
+
+## Dispatch Instructions (MUST be followed when the PM/upper-level orchestrator launches this skill)
+1. Launch method: use the task tool to launch a subagent; subagent_type MUST be `ba`; the PM or orchestrator must not execute this skill's content on its own.
+2. The task prompt MUST carry the context (indispensable): the absolute path of the project root (projectRoot), the project English abbreviation ({project abbreviation}), the current version ({current version}), the original user input $ARGUMENTS (including the file paths mentioned by the user), and the skill name (impm-urs-create; require the subagent to load this skill with the Skill tool first before executing).
+3. Completion requirement: wait for the subagent to return the completion result, verify the output files and the version_progress.md progress records, and only proceed to the next step when everything is correct.
 
 ## Key Variables and How to Get Them
 | Variable | Description | How to get it |

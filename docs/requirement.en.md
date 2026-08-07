@@ -13,7 +13,7 @@
 | SAD | System Architecture Design | 系统架构设计 | Design goals and constraints, technology stack selection and rationale, system context diagram, container diagram, component diagram, deployment architecture diagram, security architecture, performance architecture, data flow diagram, architecture decision records |
 | DBD | Database Design Document | 数据库设计文档 | Design goals, database selection, ER diagram (Mermaid), logical model, physical model, table structure definitions, index design, view/stored procedure/trigger design, data dictionary, backup and recovery strategy, security strategy |
 | API | API Design Document | 接口设计文档 | API list, API versioning strategy, authentication and authorization mechanisms, common error code definitions, detailed interface definitions (URL/Method/Header/Body/Response), status code mapping, rate limiting strategy, example code |
-| LLD | Low-Level Design Document | 详细设计文档 | Module overview, class diagrams (Mermaid), sequence diagrams (Mermaid), state diagrams, core algorithm pseudocode/flowcharts, interface implementation details, data structure definitions, exception handling strategy, logging conventions, performance optimization points, unit test strategy |
+| LLD | Low-Level Design Document | 详细设计文档 | Detailed design of the overall business logic: module overview, module division and responsibilities, class diagrams (Mermaid), core business process sequence diagrams (Mermaid), state diagrams, core business logic pseudocode/flowcharts, business rules and constraints, business data flows, data structure definitions, exception handling strategy, logging conventions, performance optimization points, unit test strategy (interface details are the responsibility of the API Design Document and are not repeated in the LLD) |
 | TestCase | Test Case Document | 测试用例 | Test case ID, test case name, module, priority, preconditions, test steps, expected results, test data, related requirement ID, test type (functional/API/performance/security) |
 
 # Project Organization Structure
@@ -134,11 +134,19 @@ Based on the current project documentation and code, reverse-engineer the necess
 - agent: TL
 - Handling:
   1. Read the LLD-TEMPLATE.MD template file from the template directory.
-  2. Reverse-engineer the Low-Level Design Document from the current project's code and documents, as well as the previously generated PRD and SAD.
+  2. Reverse-engineer the Low-Level Design Document from the current project's code and documents, as well as the previously generated PRD and SAD. The LLD focuses on the detailed design of the overall business logic (module division, business processes, core business logic, business rules, etc.); interface definitions and request/response parameters are the responsibility of the API Design Document and are not repeated in the LLD.
   3. Store the reverse-engineered Low-Level Design Document at docs/{project-abbreviation}-v0.0.1/ {project-abbreviation}-lld-v0.0.1.md. If the project is an empty project, write an empty MD.
   4. Copy docs/{project-abbreviation}-v0.0.1/ {project-abbreviation}-lld-v0.0.1.md to docs/{project-abbreviation}-lld.md.
 
-### k) Test Cases, Test Functions, and Automated Test Script Initialization
+### k) Task List Initialization
+- Skill: impm-init-task
+- agent: TL
+- Handling:
+  1. Read the TASK-TEMPLATE.json template file from the template directory.
+  2. Based on the SAD, the current version PRD, and the current version LLD, as well as the API document (when it exists), complete the task list for the current version using the JSON format in the template: docs/{project-abbreviation}-v0.0.1/ {project-abbreviation}-task-v0.0.1.json. If the project is an empty project, leave the tasks array empty.
+  3. Version progress file: docs/{project-abbreviation}-v0.0.1/version_progress.md. Add a new first row: step number: previous number + 1, step name: impm-init-task, step status: completed.
+
+### l) Test Cases, Test Functions, and Automated Test Script Initialization
 - Skill: impm-init-testcase
 - agent: TE
 - Handling:
@@ -149,7 +157,7 @@ Based on the current project documentation and code, reverse-engineer the necess
   5. Complete the test function writing for each test case in the test case document.
   6. Generate automated test scripts based on the completed test functions, expected inputs/outputs, and result values.
 
-### l) Commit Initialization Content
+### m) Commit Initialization Content
 - Skill: impm-init-commit
 - agent: SCM
 - Handling:
@@ -219,7 +227,7 @@ Based on the current project documentation and code, reverse-engineer the necess
 - agent: TL
 - Handling:
   1. Read the LLD-TEMPLATE.MD template file from the template directory.
-  2. Based on the SAD and the current version's PRD, referencing the existing low-level design: docs/{project-abbreviation}-lld.md (may be empty), apply the LLD template format to complete the low-level design for the current version's new requirements: docs/{project-abbreviation}-v{current-version-number}/ {project-abbreviation}-lld-v{current-version-number}.md.
+  2. Based on the SAD and the current version's PRD, referencing the existing low-level design: docs/{project-abbreviation}-lld.md (may be empty), apply the LLD template format to complete the low-level design for the current version's new requirements: docs/{project-abbreviation}-v{current-version-number}/ {project-abbreviation}-lld-v{current-version-number}.md. The LLD focuses on the detailed design of the overall business logic (module division, business processes, core business logic, business rules, etc.); interface definitions and request/response parameters are the responsibility of the API Design Document and are not repeated in the LLD.
   3. Version progress file: docs/{project-abbreviation}-v{current-version-number}/version_progress.md. Add the first row: step sequence number: previous sequence number + 1, step name: impm-lld-create, step status: completed.
 
 ### h) Generate task.json Task List Document
@@ -508,3 +516,5 @@ Additionally, define several commands:
 ## Plugins
 1. Based on the above requirements, decide for yourself which common functions to integrate into a plugin written in TS.
 2. This project requires strictly following the designed process in sequence, without skipping, without out-of-order execution, and without hallucination. Consider whether some AI processing can be replaced with code written in TS in a plugin to improve compliance with the process commands.
+
+<!-- SPDX-License-Identifier: Apache-2.0 / Copyright 2026 jenemy8023 <jenemy8023@163.com> -->

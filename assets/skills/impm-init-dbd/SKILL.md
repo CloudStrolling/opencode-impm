@@ -15,7 +15,12 @@ description: Determines whether the project needs a database; if so, reads the D
 - When the Database Design Document (DBD) and initialization SQL need to be created or completed.
 
 ## Executing Agent
-This skill is executed by the DBA subagent. Load this skill with the Skill tool when executing.
+This skill is executed by the DBA subagent (subagent_type=dba). Load this skill with the Skill tool when executing.
+
+## Dispatch Instructions (MUST be followed when the PM/upper-level orchestrator launches this skill)
+1. Launch method: use the task tool to launch a subagent; subagent_type MUST be `dba`; the PM or orchestrator must not execute this skill's content on its own.
+2. The task prompt MUST carry the context (indispensable): the absolute path of the project root (projectRoot), the project English abbreviation ({project abbreviation}), the current version ({current version}), the original user input $ARGUMENTS (including the file paths mentioned by the user), and the skill name (impm-init-dbd; require the subagent to load this skill with the Skill tool first before executing).
+3. Completion requirement: wait for the subagent to return the completion result, verify the output files and the version_progress.md progress records, and only proceed to the next step when everything is correct.
 
 ## Key Variables and How to Get Them
 | Variable | Description | How to get it |
