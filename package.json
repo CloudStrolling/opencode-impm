@@ -1,6 +1,6 @@
 {
   "name": "opencode-impm",
-  "version": "0.1.0",
+  "version": "0.4.3",
   "description": "I am the Project Manager (AI Project Manager) OpenCode plugin - an engineered full-lifecycle development suite (agents + commands + skills + tools) implementing the traditional waterfall development process",
   "type": "module",
   "main": "dist/index.js",
