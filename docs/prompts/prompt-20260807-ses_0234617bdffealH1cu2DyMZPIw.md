@@ -1,16 +1,16 @@
 # Conversation Record: notice and readme
 
 - Main session: ses_0234617bdffealH1cu2DyMZPIw
-- Exported at: 2026-08-07 23:07:58
+- Exported at: 2026-08-08 17:38:43
 - Session count: 2 (main session + 1 sub-sessions)
 
 ## Token Usage
 
 | Session | Input tokens | Output tokens (incl. reasoning) | Reasoning tokens | Cache read | Cache write |
 | --- | --- | --- | --- | --- | --- |
-| Main session `ses_0234617bdffealH1cu2DyMZPIw` (notice and readme) | 15324 | 4047 | 1327 | 530176 | 0 |
+| Main session `ses_0234617bdffealH1cu2DyMZPIw` (notice and readme) | 66568 | 16381 | 6422 | 1169536 | 0 |
 | Sub-session `ses_023443510ffe0GTI0W35vAXeQm` (Add English comments to code (@dw subagent)) | 80492 | 29125 | 9484 | 2048512 | 0 |
-| **Total** | **95816** | **33172** | **10811** | **2578688** | **0** |
+| **Total** | **147060** | **45506** | **15906** | **3218048** | **0** |
 
 ## Session Tree
 
@@ -243,6 +243,342 @@ src目录下的所有源代码添加备注。包括：文件备注，函数备�
 注：本仓库（opencode-impm 插件自身）docs/ 下无版本目录及 version_progress.md，故进度记录步骤已跳过，未虚构版本目录。
 
 - Step finish (reason: stop, tokens: 221+192)
+
+### User 2026-08-08 17:35:51
+
+根据 D:\jenemy\develop\OpenCodeProjects\opencode-impm-cn里 readme.md的内容，更新本项目的英文版md
+
+### Assistant 2026-08-08 17:35:51
+> Model: opencode/deepseek-v4-flash-free | agent: build
+
+- Step start (with snapshot)
+> **Reasoning**
+>
+> The user wants me to look at D:\jenemy\develop\OpenCodeProjects\opencode-impm-cn\readme.md and update this project's English README.md based on it. Let me first check what's in the CN project's readme and what this project's current README looks like.
+
+- Tool call: `bash` (state: [object Object])
+- Step finish (reason: tool-calls, tokens: 39181+172)
+
+### Assistant 2026-08-08 17:36:00
+> Model: opencode/deepseek-v4-flash-free | agent: build
+
+- Step start (with snapshot)
+- Tool call: `read` (state: [object Object])
+- Step finish (reason: tool-calls, tokens: 111+63)
+
+### Assistant 2026-08-08 17:36:49
+> Model: opencode/deepseek-v4-flash-free | agent: build
+
+- Step start (with snapshot)
+> **Reasoning**
+>
+> Now let me look at the current README.md in this project (opencode-impm, English version) to understand the current state.
+
+Now let me read the current English README of this project:
+
+- Tool call: `read` (state: [object Object])
+- Step finish (reason: tool-calls, tokens: 7196+101)
+
+### Assistant 2026-08-08 17:36:54
+> Model: opencode/deepseek-v4-flash-free | agent: build
+
+- Step start (with snapshot)
+> **Reasoning**
+>
+> The user wants me to update this project's English README.md based on the content of the CN project's readme.md. The CN version is v0.4.2 with a richer structure including:
+> - Header with badges, emoji
+> - Table of contents
+> - Core features
+> - Architecture overview (ASCII diagram + agent table)
+> - Quick start (one-key + per-phase)
+> - Installation (environment, local install, npm dependency, verification)
+> - Configuration (directory structure after install, minimal config example)
+> - Usage docs (4-phase flow mermaid, doc standard paths, full command list 46)
+> - Project structure
+> - Contribution guide
+> - FAQ
+> - Changelog
+> - License
+> - Appendix (doc abbreviations, agent list, skill-agent mapping)
+> 
+> The current English README has: Introduction, Core Features, Directory Structure, Environment Requirements, Installation, Quick Start, Command List (46), Plugin Tools (11), Standard Document Paths, License.
+> 
+> I should update the English README to match the CN version's structure, translated into English. I should check what's different between the projects — the CN is version 0.4.2, this one is v0.4.1 per git log. Let me check the actual differences in commands/skills counts. Let me count assets in this project:
+> 
+> - agents count
+> - commands count
+> - skills count
+> 
+> Let me check. The CN readme says 13 agents, 45 commands, 45 skills (in some places 46 commands). Actually CN readme says "46 个命令" in one place and "45 个技能" elsewhere. Let me verify this project's actual counts.
+
+Now let me verify the actual counts in this project to make the English README accurate:
+
+- Tool call: `bash` (state: [object Object])
+- Tool call: `bash` (state: [object Object])
+- Step finish (reason: tool-calls, tokens: 3236+574)
+
+### Assistant 2026-08-08 17:37:02
+> Model: opencode/deepseek-v4-flash-free | agent: build
+
+- Step start (with snapshot)
+> **Reasoning**
+>
+> Wait — assets/skills has 47 directories but the skills I saw in the system prompt were 47ish. Let me count: skills in the available_skills list for this project (.opencode/skills) — that's the installed copy. Let me count actual skills in assets/skills:
+> 
+> Directories: 47. Hmm, but wait, "template" is one of them. Let me check if template is a directory in skills.
+
+- Tool call: `bash` (state: [object Object])
+- Step finish (reason: tool-calls, tokens: 230+157)
+
+### Assistant 2026-08-08 17:37:09
+> Model: opencode/deepseek-v4-flash-free | agent: build
+
+- Step start (with snapshot)
+> **Reasoning**
+>
+> So: 13 agents, 46 commands, 46 skills + 1 template directory = 47 directories. The template directory is templates, so 46 skills.
+> 
+> Wait, the system prompt's available_skills list shows skills including "impm-task-coding-code" etc. Count of skills: the list above minus "template" = 46 skills.
+> 
+> Tools: 14 tools in src/tools (context-builder, doc-reader, doc-writer, git-helper, progress, project-analyzer, project-state (2 tools), prompt-recorder (3 tools), task-manager, template-reader, version) = let me count tools:
+> - impm_project_info (project-state)
+> - impm_isinit (project-state)
+> - impm_doc_reader
+> - impm_doc_writer
+> - impm_template_reader
+> - impm_version
+> - impm_progress
+> - impm_task_manager
+> - impm_context_builder
+> - impm_project_analyzer
+> - impm_git
+> - impm_prompt_record
+> - impm_prompt_finalize
+> - impm_prompt_export
+> 
+> = 14 tools.
+> 
+> Hmm, the current English README says 11 plugin tools. The CN readme says 14 plugin tools. Since the English project is at v0.4.1 which includes prompt recorder (per git log "impm v0.3.0 add prompt record and token count"), the English version should have 14 tools too. The current English readme lists only 11 (missing the 3 prompt-recorder tools).
+> 
+> Also the CN readme mentions "全程简体中文" as a core feature (all Simplified Chinese), while the English version should say "All-English" (全英文). Good, the English version's core features should be adapted for English.
+> 
+> Let me also check whether the CN project has CHANGELOG.md — the CN readme references it. Let me check this project for CHANGELOG.md.
+
+- Tool call: `bash` (state: [object Object])
+- Step finish (reason: tool-calls, tokens: 341+494)
+
+### Assistant 2026-08-08 17:37:16
+> Model: opencode/deepseek-v4-flash-free | agent: build
+
+- Step start (with snapshot)
+> **Reasoning**
+>
+> The current version is v0.4.2 (git log shows "impm v0.4.2 add code comment"). The CN version is also 0.4.2. Let me check the CN project's package.json version and its opencode.json to compare. Also check the CN's CHANGELOG.md existence.
+> 
+> Note the git log: "4fa91c9 impm v0.4.2 add code comment" — this is the most recent commit, presumably the commit of my code-comment work. Let me check git status.
+
+- Tool call: `bash` (state: [object Object])
+- Step finish (reason: tool-calls, tokens: 180+232)
+
+### Assistant 2026-08-08 17:37:22
+> Model: opencode/deepseek-v4-flash-free | agent: build
+
+- Step start (with snapshot)
+> **Reasoning**
+>
+> The CN project also doesn't have a CHANGELOG.md, and the current English README doesn't reference one. The CN README references `CHANGELOG.md` — since neither project has it, I'll leave out the changelog section or keep a reference without a broken link. Better to keep the English README self-contained: skip the changelog section or mention it without linking... Actually the CN README links `./CHANGELOG.md` which doesn't exist there either. I'll skip the changelog section to avoid a broken link.
+> 
+> Now, the task: update the English README.md based on the CN readme's content. The English version should mirror the CN structure:
+> 1. Header with badges + tagline
+> 2. TOC
+> 3. Core Features
+> 4. Architecture Overview (ASCII + agent table maybe)
+> 5. Quick Start
+> 6. Installation
+> 7. Configuration
+> 8. Usage documentation (4-phase flow, doc standard paths, full command list)
+> 9. Project structure
+> 10. Contribution guide
+> 11. FAQ
+> 12. License
+> 13. Appendix (doc abbreviations, agent list, skill-agent mapping)
+> 
+> But I should adapt to the English project's actual facts:
+> - Name: opencode-impm (not opencode-impm-cn)
+> - Version 0.4.2
+> - 13 agents, 46 commands, 46 skills, 14 tools
+> - All-English output (not Simplified Chinese)
+> - The commands list should match the actual commands in assets/commands (46). The CN README command list should match. Let me verify the command list matches this project's 46 commands. The CN readme lists 46 commands (1 + 14 + 9 + 12 + 9 = 45... let me count: 总流程 1, 阶段1: 14, 阶段2: 9, 阶段3: 12, 阶段4: 9 → 45. Hmm, CN says "46 个命令" in one place and "45 个命令" in another. Let me count the actual commands in this project: 46 .md files in assets/commands.
+> 
+> Let me list the commands to make sure the README list matches this project exactly.
+
+- Tool call: `bash` (state: [object Object])
+- Step finish (reason: tool-calls, tokens: 120+540)
+
+### Assistant 2026-08-08 17:37:29
+> Model: opencode/deepseek-v4-flash-free | agent: build
+
+- Step start (with snapshot)
+> **Reasoning**
+>
+> 46 commands confirmed. The English README's existing command list has all of these (46). Good.
+> 
+> Now let me write the new English README.md mirroring the CN structure, translated to English, and adapted with correct facts:
+> - 13 agents, 46 commands, 46 skills, 14 tools
+> - version 0.4.2
+> - All-English
+> - GitHub URL: The CN readme uses https://github.com/CloudStrolling/opencode-impm-cn.git. For the English project, I don't know the repo URL — the CN readme says CloudStrolling/opencode-impm-cn. For this project I should not invent a URL. Let me check package.json repository field or .git config remote.
+
+- Tool call: `bash` (state: [object Object])
+- Step finish (reason: tool-calls, tokens: 355+222)
+
+### Assistant 2026-08-08 17:37:35
+> Model: opencode/deepseek-v4-flash-free | agent: build
+
+- Step start (with snapshot)
+> **Reasoning**
+>
+> No git remote configured and no repository field. So I can't invent a clone URL — the install instructions should just use generic paths without a specific GitHub URL, or reference the npm package `opencode-impm`.
+> 
+> Now write the new README.md in English, mirroring the CN structure:
+> 
+> 1. Header (badges: version 0.4.2, Apache 2.0 license, Node >= 18, OpenCode) + tagline + links
+> 2. TOC
+> 3. Core Features (6 features adapted: agent orchestration, 4 phases 46 skills, TDD, versioned management, all-English, 14 plugin tools)
+> 4. Architecture Overview (ASCII diagram with English labels)
+> 5. Quick Start (one-key /impm + phase table)
+> 6. Installation (environment, local install, npm dependency, verification)
+> 7. Configuration (.opencode/ structure + minimal config example)
+> 8. Usage Documentation (4-phase mermaid flow, doc standard paths, full command list 46 in collapsible)
+> 9. Project Structure
+> 10. Contribution Guide
+> 11. FAQ
+> 12. License
+> 13. Appendix (doc abbreviations, agent list, skill-agent mapping tables)
+> 
+> Adaptations from CN:
+> - "全程简体中文" → "All-English workflow"
+> - 45 技能 → 46 skills (actual count); commands 46
+> - 14 个插件工具 → 14 plugin tools (including 3 prompt-recorder tools)
+> - agent mapping table with English-only names (BA = Business Analyst etc.)
+> - Skill-agent mapping tables with English step descriptions
+> - The command list should include the executing agent column like CN? The CN readme has 执行 Agent column. I can include "Executing Agent" column in the command tables for phases 1-4. The current English README doesn't have it, but mirroring CN structure is the request. I'll include it.
+> 
+> - Version badge 0.4.2
+> - license badge Apache 2.0
+> - node >=18 badge
+> - opencode badge
+> 
+> - CHANGELOG: skip (neither repo has it; CN has broken link). Or keep the section with link to CHANGELOG.md? Since it doesn't exist, skip it. Actually CN README has a changelog section. To stay faithful but avoid broken link, I'll omit the changelog section.
+> 
+> Wait — the user said "根据 ...readme.md 的内容，更新本项目的英文版md" — update this project's English md based on the CN readme content. So essentially translate/adapt the CN readme into the English README, keeping accuracy to the English project facts.
+> 
+> Note the file name: project uses readme.md lowercase (directory listing showed README.md and readme.md both exist? Earlier `Test-Path README.md` returned True, and reading "README.md" showed content with title "opencode-impm" — the read tool resolved to readme.md? Interesting: the read result said `<path>D:\jenemy\develop\OpenCodeProjects\opencode-impm\readme.md</path>` when I read README.md — that means the file is actually named readme.md on disk (Windows case-insensitive). So I should write to readme.md.
+> 
+> Let me check what file names exist exactly.
+
+- Tool call: `bash` (state: [object Object])
+- Step finish (reason: tool-calls, tokens: 79+752)
+
+### Assistant 2026-08-08 17:37:45
+> Model: opencode/deepseek-v4-flash-free | agent: build
+
+- Step start (with snapshot)
+> **Reasoning**
+>
+> The file is readme.md (lowercase). Now let me write the new English readme.md mirroring the CN structure. I'll write the complete file in English with accurate facts:
+> 
+> - 13 agents, 46 commands, 46 skills, 14 tools
+> - version 0.4.2
+> - All-English
+> 
+> Let me draft the content now. Keep the structure of CN readme:
+> 
+> 1. Centered header with badges and emoji
+> 2. TOC
+> 3. Core Features
+> 4. Architecture Overview
+> 5. Quick Start
+> 6. Installation
+> 7. Configuration
+> 8. Usage Documentation (four-phase flow, doc paths, full command list)
+> 9. Project Structure
+> 10. Contribution Guide
+> 11. FAQ
+> 12. License
+> 13. Appendix (doc abbreviations, agent list, skill-agent mapping)
+> 
+> Adaptations:
+> - Replace "全程简体中文" with "All-English workflow"
+> - 46 skills/commands
+> - 14 tools
+> - Commands listed with executing agents
+> - Skill-agent mapping in English
+> 
+> Let me write this file.
+
+Now I'll write the updated English `readme.md`, mirroring the CN structure (badges/header, TOC, architecture overview, quick start, install/config, usage docs with mermaid flow + full command list, project structure, contribution, FAQ, license, appendix) with accurate facts for this repo (v0.4.2, 13 agents, 46 commands, 46 skills, 14 tools, all-English):
+
+- Tool call: `write` (state: [object Object])
+- Step finish (reason: tool-calls, tokens: 99+6191)
+- File patch: D:/jenemy/develop/OpenCodeProjects/opencode-impm/readme.md
+
+### Assistant 2026-08-08 17:38:18
+> Model: opencode/deepseek-v4-flash-free | agent: build
+
+- Step start (with snapshot)
+> **Reasoning**
+>
+> The readme.md has been updated. Let me verify the file was written correctly by checking the beginning and end, and confirm the counts are accurate (46 commands listed).
+> 
+> Let me count commands in the new readme: Overall 1 + Phase1 14 + Phase2 9 + Phase3 12 + Phase4 9 = 45. Hmm, the CN readme also says 46 in the header but lists 45. Let me count the actual commands in assets: 46 files. The list in the CN readme: Phase 1 has 14 entries (impm-init + 13), phase 2 has 9, phase 3 has 12, phase 4 has 9, overall 1. 1+14+9+12+9 = 45. But assets has 46 commands. Which one is missing from the readme? Let me compare the actual asset list against the readme list.
+> 
+> Assets (46): impm, impm-analysis-commit, impm-api-create, impm-coding-comment, impm-coding-review, impm-coding, impm-dbd-create, impm-deploy-update, impm-doc-merge, impm-doc-update, impm-docs, impm-finish, impm-git-merge, impm-init-api, impm-init-commit, impm-init-dbd, impm-init-git, impm-init-isinit, impm-init-lld, impm-init-prd, impm-init-project, impm-init-sad, impm-init-task, impm-init-testcase, impm-init-urs, impm-init-version, impm-init, impm-lld-create, impm-prd-create, impm-project-update, impm-regression-test, impm-sad-update, impm-task-coding-api, impm-task-coding-code, impm-task-coding-context, impm-task-coding-cs, impm-task-coding-dbd, impm-task-coding-gitcommit, impm-task-coding-runtest, impm-task-coding-testcase, impm-task-coding-writetest, impm-task-coding-ws, impm-task-coding, impm-task-create, impm-urs-create, impm-version-create
+> 
+> Readme lists: impm, impm-init, impm-init-isinit, impm-init-git, impm-init-project, impm-init-version, impm-init-urs, impm-init-prd, impm-init-sad, impm-init-dbd, impm-init-api, impm-init-lld, impm-init-task, impm-init-testcase, impm-init-commit (14), impm-docs, impm-version-create, impm-urs-create, impm-prd-create, impm-sad-update, impm-dbd-create, impm-api-create, impm-lld-create, impm-task-create, impm-analysis-commit (9), impm-coding, impm-task-coding, impm-task-coding-context, impm-task-coding-cs, impm-task-coding-ws, impm-task-coding-dbd, impm-task-coding-api, impm-task-coding-testcase, impm-task-coding-code, impm-task-coding-writetest, impm-task-coding-runtest, impm-task-coding-gitcommit (12), impm-finish, impm-regression-test, impm-coding-comment, impm-coding-review, impm-project-update, impm-doc-merge, impm-doc-update, impm-deploy-update, impm-git-merge (9). Total = 1+14+9+12+9 = 45.
+> 
+> Missing: impm-task-coding-code? No it's there. Let me diff carefully:
+> 
+> Assets: impm-analysis-commit ✓, impm-api-create ✓, impm-coding-comment ✓, impm-coding-review ✓, impm-coding ✓, impm-dbd-create ✓, impm-deploy-update ✓, impm-doc-merge ✓, impm-doc-update ✓, impm-docs ✓, impm-finish ✓, impm-git-merge ✓, impm-init-api ✓, impm-init-commit ✓, impm-init-dbd ✓, impm-init-git ✓, impm-init-isinit ✓, impm-init-lld ✓, impm-init-prd ✓, impm-init-project ✓, impm-init-sad ✓, impm-init-task ✓, impm-init-testcase ✓, impm-init-urs ✓, impm-init-version ✓, impm-init ✓, impm-lld-create ✓, impm-prd-create ✓, impm-project-update ✓, impm-regression-test ✓, impm-sad-update ✓, impm-task-coding-api ✓, impm-task-coding-code ✓, impm-task-coding-context ✓, impm-task-coding-cs ✓, impm-task-coding-dbd ✓, impm-task-coding-gitcommit ✓, impm-task-coding-runtest ✓, impm-task-coding-testcase ✓, impm-task-coding-writetest ✓, impm-task-coding-ws ✓, impm-task-coding ✓, impm-task-create ✓, impm-urs-create ✓, impm-version-create ✓ — that's 45 in my readme list... wait let me recount. Actually I count 45 in the readme. Assets has 46. Missing one: let me list assets again:
+> 
+> impm, impm-analysis-commit, impm-api-create, impm-coding-comment, impm-coding-review, impm-coding, impm-dbd-create, impm-deploy-update, impm-doc-merge, impm-doc-update, impm-docs, impm-finish, impm-git-merge, impm-init-api, impm-init-commit, impm-init-dbd, impm-init-git, impm-init-isinit, impm-init-lld, impm-init-prd, impm-init-project, impm-init-sad, impm-init-task, impm-init-testcase, impm-init-urs, impm-init-version, impm-init, impm-lld-create, impm-prd-create, impm-project-update, impm-regression-test, impm-sad-update, impm-task-coding-api, impm-task-coding-code, impm-task-coding-context, impm-task-coding-cs, impm-task-coding-dbd, impm-task-coding-gitcommit, impm-task-coding-runtest, impm-task-coding-testcase, impm-task-coding-writetest, impm-task-coding-ws, impm-task-coding, impm-task-create, impm-urs-create, impm-version-create
+> 
+> Count: 1. impm, 2. impm-analysis-commit, 3. impm-api-create, 4. impm-coding-comment, 5. impm-coding-review, 6. impm-coding, 7. impm-dbd-create, 8. impm-deploy-update, 9. impm-doc-merge, 10. impm-doc-update, 11. impm-docs, 12. impm-finish, 13. impm-git-merge, 14. impm-init-api, 15. impm-init-commit, 16. impm-init-dbd, 17. impm-init-git, 18. impm-init-isinit, 19. impm-init-lld, 20. impm-init-prd, 21. impm-init-project, 22. impm-init-sad, 23. impm-init-task, 24. impm-init-testcase, 25. impm-init-urs, 26. impm-init-version, 27. impm-init, 28. impm-lld-create, 29. impm-prd-create, 30. impm-project-update, 31. impm-regression-test, 32. impm-sad-update, 33. impm-task-coding-api, 34. impm-task-coding-code, 35. impm-task-coding-context, 36. impm-task-coding-cs, 37. impm-task-coding-dbd, 38. impm-task-coding-gitcommit, 39. impm-task-coding-runtest, 40. impm-task-coding-testcase, 41. impm-task-coding-writetest, 42. impm-task-coding-ws, 43. impm-task-coding, 44. impm-task-create, 45. impm-urs-create, 46. impm-version-create
+> 
+> OK so 46 commands. In my readme: Overall 1 (impm) + Phase 1: impm-init, impm-init-isinit, impm-init-git, impm-init-project, impm-init-version, impm-init-urs, impm-init-prd, impm-init-sad, impm-init-dbd, impm-init-api, impm-init-lld, impm-init-task, impm-init-testcase, impm-init-commit = 14. Phase 2: impm-docs, impm-version-create, impm-urs-create, impm-prd-create, impm-sad-update, impm-dbd-create, impm-api-create, impm-lld-create, impm-task-create, impm-analysis-commit = 10! Wait I need to count my readme phase 2: I listed `/impm-docs`, `/impm-version-create`, `/impm-urs-create`, `/impm-prd-create`, `/impm-sad-update`, `/impm-dbd-create`, `/impm-api-create`, `/impm-lld-create`, `/impm-task-create`, `/impm-analysis-commit` = 10 entries. Phase 3: impm-coding, impm-task-coding, impm-task-coding-context, impm-task-coding-cs, impm-task-coding-ws, impm-task-coding-dbd, impm-task-coding-api, impm-task-coding-testcase, impm-task-coding-code, impm-task-coding-writetest, impm-task-coding-runtest, impm-task-coding-gitcommit = 12. Phase 4: impm-finish, impm-regression-test, impm-coding-comment, impm-coding-review, impm-project-update, impm-doc-merge, impm-doc-update, impm-deploy-update, impm-git-merge = 9.
+> 
+> Total = 1 + 14 + 10 + 12 + 9 = 46. 
+> 
+> Also I used `|:----:|` alignment for the phase column in command tables — I used `|:-----|:-----|:----------:|` for three-column tables and `|:-----|:-----|` for two-column. Fine.
+> 
+> Also I need to double check the "配置" section in CN uses `.opencode/` structure with agents/commands/skills/plugins and mentions "45 个命令定义" etc. I used 46. Good.
+> 
+> Also CN readme mentions in FAQ Q2 "scripts/install.ps1" - kept.
+> 
+> One more consideration: the header says "46 Skills" in core features table — CN says "4 阶段 45 个技能". My project has 46 skills. Good.
+> 
+> The doc-merge skill would normally maintain this file, but this task was requested directly. Done. Let me quickly verify the file renders correctly (check head/tail) and verify the count claim of 46 commands in the file.
+
+- Tool call: `bash` (state: [object Object])
+- Step finish (reason: tool-calls, tokens: 34+2580)
+
+### Assistant 2026-08-08 17:38:37
+> Model: opencode/deepseek-v4-flash-free | agent: build
+
+- Step start (with snapshot)
+> **Reasoning**
+>
+> 46 command rows confirmed. The readme.md is now updated. Let me summarize the change to the user.
+
+已根据 `opencode-impm-cn/readme.md` 的结构更新本项目 `readme.md`（全英文），主要变化：
+
+- **新增**：徽章头部、目录、架构概览图、快速开始（一键/分阶段）、安装（本地 + npm 依赖 + 验证）、配置说明、四阶段 Mermaid 流程图、46 命令完整清单（可折叠，含执行 Agent 列）、贡献指南、FAQ、附录（文档缩写表、Agent 清单、技能-Agent 映射表）
+- **修正**：工具数由 11 → 14（补充 3 个 prompt-recorder 工具），技能/命令数为 46，版本徽章 0.4.2
+- **本地化适配**：「全程简体中文」特性改为「All-English Workflow」；git clone 地址省略（仓库未配置 remote，用 `<repository-url>` 占位）；CN 版引用的 CHANGELOG.md 两个仓库均不存在，故省略
+
+已核验：46 条命令行与 `assets/commands` 实际文件一一对应。
+
+- Step finish (reason: stop, tokens: 82+256)
 
 ## Session ses_023443510ffe0GTI0W35vAXeQm
 
