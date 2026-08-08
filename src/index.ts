@@ -53,6 +53,10 @@ function createStringSchema(description: string) {
     return { type: "string" as const, description };
 }
 
+/**
+ * Create the JSON schema for an OpenCode tool string-array argument
+ * @param description The description of the argument
+ */
 function createArraySchema(description: string) {
     return {
         type: "array" as const,
@@ -95,6 +99,7 @@ function wrapToolResult(def: {
     };
 }
 
+/** Runtime context injected by OpenCode when loading the plugin */
 interface ToolContext {
     project: { path: string };
     directory: string;

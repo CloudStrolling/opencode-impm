@@ -85,25 +85,35 @@ const STEP_ALIASES: Record<string, string> = {
     "impm-sad-create": "impm-sad-update",
 };
 
+/** Map an alias step name to its canonical name (no-op when it is not an alias) */
 function normalizeStepName(stepName: string): string {
     const key = stepName.trim();
     const aliased = STEP_ALIASES[key];
     return aliased ?? key;
 }
 
+/** Whether the step name is in the known workflow step list */
 function isKnownStep(stepName: string): boolean {
     return KNOWN_STEP_NAMES.includes(stepName);
 }
 
+/** A single row of the version progress table */
 export interface ProgressRow {
     seq: number;
     stepName: string;
     status: string;
 }
 
+/** Regex matching a data row: | seq | step name | status | */
 const ROW_RE = /^\|\s*(\d+)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|$/;
+/** Regex matching the table header line (skipped when parsing) */
 const HEADER_RE = /^\|\s*Step\s/i;
 
+/**
+ * Parse all data rows from the progress file content
+ * @param content The Markdown content of version_progress.md
+ * @returns The parsed rows (seq, stepName, status)
+ */
 function parseRows(content: string): ProgressRow[] {
     const rows: ProgressRow[] = [];
     for (const line of content.split(/\r?\n/)) {
@@ -121,6 +131,13 @@ function parseRows(content: string): ProgressRow[] {
     return rows;
 }
 
+/**
+ * Build the Markdown content of the progress file
+ * @param abbrev The project abbreviation
+ * @param version The version number
+ * @param rows The rows to render
+ * @returns The full Markdown text
+ */
 function buildFile(abbrev: string, version: string, rows: ProgressRow[]): string {
     const lines = [
         `# Version Progress - ${abbrev}-v${normalizeVersion(version)}`,
@@ -134,11 +151,17 @@ function buildFile(abbrev: string, version: string, rows: ProgressRow[]): string
     return lines.join("\n") + "\n";
 }
 
+/** Tool definition (description) exposed to the plugin registry */
 export const progressDefinition = {
     description:
         "Version progress management: action=init creates the version progress file version_progress.md (a 3-column table: Step No., Step Name, Step Status); action=add inserts a new row at the first position of the table (sequence number is automatically the current max + 1); action=check queries the latest status of a step and the overall progress; action=list lists all progress records. Use when recording and verifying the status of workflow steps.",
 };
 
+/**
+ * Execute a version progress management action (init/add/check/list)
+ * @param args The tool arguments: projectRoot, action, and optional stepName/status/version/projectName
+ * @returns The action result, including the affected rows or an error
+ */
 export function progressExecute(args: {
     projectRoot: string;
     action: "init" | "add" | "check" | "list";
@@ -158,6 +181,7 @@ export function progressExecute(args: {
         const stepName = args.stepName ? normalizeStepName(args.stepName) : "";
         const status = args.status?.trim() || "completed";
 
+        // init: create the progress file, optionally writing the first row with a validated step name
         if (action === "init") {
             if (existsSync(file)) {
                 return {
@@ -201,10 +225,12 @@ export function progressExecute(args: {
         const content = readFileSync(file, "utf8");
         const rows = parseRows(content);
 
+        // list: return all recorded rows as-is
         if (action === "list") {
             return { success: true, action, path: file, rows, total: rows.length };
         }
 
+        // check: report the latest status of a step plus an overall completion summary
         if (action === "check") {
             if (!stepName) {
                 return { success: false, action, error: "Missing required argument stepName (step name)." };
@@ -232,6 +258,7 @@ export function progressExecute(args: {
             };
         }
 
+        // add: insert a new row at the top of the table (deduplicated by step name + status, idempotent)
         if (action === "add") {
             if (!stepName) {
                 return { success: false, action, error: "Missing required argument stepName (step name)." };

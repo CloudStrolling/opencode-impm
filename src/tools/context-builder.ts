@@ -24,6 +24,7 @@ import { existsSync, readFileSync } from "fs";
 import { getDocPath } from "../utils/paths.js";
 import { latestVersion, resolveAbbrev } from "../utils/project.js";
 
+/** Tool definition (description) exposed to the plugin registry */
 export const contextBuilderDefinition = {
     description:
         "Builds the task coding context: summarizes the task information, the matching user story (extracted from the PRD), the project information (project.md), and the architecture-related sections (sad.md) by taskId, and generates a compact context Markdown for the coding phase.",
@@ -99,6 +100,11 @@ function extractSadSections(sadContent: string): string {
     return sections.join("\n\n");
 }
 
+/**
+ * Build the coding context for a task: task info + user story (PRD) + project info (project.md) + SAD sections
+ * @param args The tool arguments: projectRoot, taskId, and optional version/projectName
+ * @returns { success, context, task, taskType, userStoryId } on success, or { success: false, error }
+ */
 export function contextBuilderExecute(args: {
     projectRoot: string;
     taskId: string;
@@ -161,6 +167,7 @@ export function contextBuilderExecute(args: {
             sadSections = extractSadSections(readFileSync(sadPath, "utf8"));
         }
 
+        // Assemble the final compact context document from the four collected sections
         const context = [
             `# Task Context (#${task.id} ${task.title ?? ""})`,
             "",

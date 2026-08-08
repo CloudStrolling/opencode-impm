@@ -30,11 +30,17 @@
 
 import * as git from "../utils/git.js";
 
+/** Tool definition (description) exposed to the plugin registry */
 export const gitHelperDefinition = {
     description:
         "git operation wrapper: init (initialize repository), status (working tree status), branch (create and switch branch), checkout (switch branch), commit (stage everything and commit), merge (switch back to the main branch and squash-merge a branch), current-branch (current branch), pull (pull), log (commit log). Use for version branch creation, commits, and merges in the workflow.",
 };
 
+/**
+ * Execute a git operation action
+ * @param args The tool arguments: projectRoot, action, and optional branchName/message
+ * @returns { success, output } on success, or { success: false, error }
+ */
 export function gitHelperExecute(args: {
     projectRoot: string;
     action: string;
@@ -43,6 +49,7 @@ export function gitHelperExecute(args: {
 }) {
     const root = args.projectRoot;
     const action = args.action;
+    // Wrap a git call and convert any exception into a unified error result
     const safe = <T>(fn: () => T): { success: boolean; output?: T; error?: string } => {
         try {
             return { success: true, output: fn() };
@@ -90,6 +97,7 @@ export function gitHelperExecute(args: {
             }
             return safe(() => {
                 const outputs: string[] = [];
+                // Try the default main branch names (main/master) before squashing the development branch
                 for (const main of ["main", "master"]) {
                     try {
                         outputs.push(git.switchBranch(root, main));
@@ -111,6 +119,7 @@ export function gitHelperExecute(args: {
         case "log":
             return safe(() => git.getLog(root));
         default:
+            // Unknown action: return a descriptive error instead of throwing
             return {
                 success: false,
                 error: `Unknown action: ${action} (should be init/status/branch/checkout/commit/merge/current-branch/pull/log).`,

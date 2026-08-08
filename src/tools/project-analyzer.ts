@@ -141,22 +141,30 @@ function firstComment(content: string, ext: string): string {
     return line.trim().replace(/^(\/\/|\*|#|--|;)\s*/, "").slice(0, 80);
 }
 
+/** Tool definition (description) exposed to the plugin registry */
 export const projectAnalyzerDefinition = {
     description:
         "Scans source code directories to generate a project map: lists the code files under each directory and their functions/classes (recognized by language). Use for reverse-engineering the structure of existing projects during initialization and for updating the project map.",
 };
 
+/**
+ * Scan the source directories and generate a project map Markdown
+ * @param args The tool arguments: projectRoot, and optional sourceDirs/excludeDirs
+ * @returns { success, sourceDirs, fileCount, map } on success, or { success: false, error }
+ */
 export function projectAnalyzerExecute(args: {
     projectRoot: string;
     sourceDirs?: string[];
     excludeDirs?: string[];
 }) {
     try {
+        // Merge the user-provided exclusion list with the default excluded directories
         const extraExcluded = new Set(
             (args.excludeDirs ?? []).map((d) => d.trim()).filter(Boolean),
         );
         const excluded = new Set([...DEFAULT_EXCLUDED, ...extraExcluded]);
 
+        // Use the given source directories, or auto-detect the top-level directories of the project
         let rootDirs: string[];
         if (args.sourceDirs && args.sourceDirs.length > 0) {
             rootDirs = args.sourceDirs;
@@ -167,6 +175,7 @@ export function projectAnalyzerExecute(args: {
             rootDirs = top.filter((n) => !excluded.has(n));
         }
 
+        // Collect the code/config files under each source directory, honoring the exclusion list
         const files: Array<{ path: string; lang: string }> = [];
         for (const dir of rootDirs) {
             const full = join(args.projectRoot, dir);
@@ -188,12 +197,14 @@ export function projectAnalyzerExecute(args: {
             }
         }
 
+        // Sort the files for a stable, deterministic project map
         files.sort((a, b) => a.path.localeCompare(b.path));
 
         const lines = ["# Project Map", "", `Scanned ${files.length} files.`, ""];
         let currentGroup = "";
         for (const f of files) {
             const rel = relative(args.projectRoot, f.path).replace(/\\/g, "/");
+            // Group the entries by their top-level directory so the map is easy to browse
             const group = rel.includes("/") ? rel.split("/")[0] : "(root)";
             if (group !== currentGroup) {
                 currentGroup = group;

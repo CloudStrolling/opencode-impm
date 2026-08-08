@@ -30,8 +30,10 @@ import { dirname } from "path";
 import { getDocPath } from "../utils/paths.js";
 import { resolveAbbrev } from "../utils/project.js";
 
+/** The three allowed task statuses (input is case-insensitive; stored lowercase) */
 export const TASK_STATUSES = ["not started", "in progress", "completed"] as const;
 
+/** A single task in the task list (extra fields such as upstreamTaskIds are allowed) */
 export interface TaskItem {
     id: string;
     title: string;
@@ -39,15 +41,18 @@ export interface TaskItem {
     [key: string]: unknown;
 }
 
+/** Standard path of the task list JSON file of a version */
 function taskFilePath(projectRoot: string, abbrev: string, version: string): string {
     return getDocPath(projectRoot, abbrev, version, "task");
 }
 
+/** The task list file content: non-task payload fields plus the tasks array */
 export interface TaskListFile {
     payload: Record<string, unknown>;
     tasks: TaskItem[];
 }
 
+/** Normalize a status input to a lowercase allowed status (invalid values become "not started") */
 function normalizeStatus(status: unknown): string {
     const s = String(status ?? "").toLowerCase().trim();
     return TASK_STATUSES.includes(s as (typeof TASK_STATUSES)[number])
@@ -55,6 +60,11 @@ function normalizeStatus(status: unknown): string {
         : "not started";
 }
 
+/**
+ * Read and parse the task list file
+ * @param file The task list JSON path
+ * @returns The payload fields and the tasks array; throws on an invalid format
+ */
 function readTaskList(file: string): TaskListFile {
     const data = JSON.parse(readFileSync(file, "utf8"));
     const tasks = Array.isArray(data) ? data : data?.tasks;
@@ -69,6 +79,12 @@ function readTaskList(file: string): TaskListFile {
     return { payload, tasks: tasks as TaskItem[] };
 }
 
+/**
+ * Write the task list back to the file (payload + tasks, pretty-printed JSON)
+ * @param file The task list JSON path
+ * @param payload The non-task metadata fields
+ * @param tasks The tasks to persist
+ */
 function writeTaskList(
     file: string,
     payload: Record<string, unknown>,
@@ -81,6 +97,7 @@ function writeTaskList(
     );
 }
 
+/** Whether all upstream tasks of a task are completed (missing upstream ids are ignored) */
 function upstreamDone(task: TaskItem, tasks: TaskItem[]): boolean {
     const upstream: unknown[] = (task.upstreamTaskIds ?? []) as unknown[];
     for (const id of upstream) {
@@ -95,6 +112,7 @@ function upstreamDone(task: TaskItem, tasks: TaskItem[]): boolean {
     return true;
 }
 
+/** Build a summary: total count, counts by status, and pending (non-completed) tasks */
 function summaryOf(tasks: TaskItem[]) {
     const byStatus: Record<string, number> = {};
     for (const t of tasks) {
@@ -110,11 +128,17 @@ function summaryOf(tasks: TaskItem[]) {
     };
 }
 
+/** Tool definition (description) exposed to the plugin registry */
 export const taskManagerDefinition = {
     description:
         "Task list management: action=init validates and writes the task list JSON (taskListJson); action=query queries tasks (returns a single task when taskId is passed, otherwise the list summary and unfinished tasks); action=next returns the next executable task (not started and all of whose upstream tasks are completed); action=update updates a task status (not started/in progress/completed). Use for task scheduling and status tracking.",
 };
 
+/**
+ * Execute a task list management action (init/query/next/update)
+ * @param args The tool arguments: projectRoot, action, and optional taskId/status/taskListJson/version/projectName
+ * @returns The action result (task, summary, or message) or { success: false, error }
+ */
 export function taskManagerExecute(args: {
     projectRoot: string;
     action: "init" | "query" | "next" | "update";
@@ -133,6 +157,7 @@ export function taskManagerExecute(args: {
         const file = taskFilePath(args.projectRoot, abbrev, version);
         const action = args.action;
 
+        // init: validate the JSON and persist the task list with normalized statuses
         if (action === "init") {
             const raw = args.taskListJson ?? "";
             let data: unknown;
@@ -153,6 +178,7 @@ export function taskManagerExecute(args: {
                     error: "The task list is empty or invalid: it must be an array of tasks, or an object containing a non-empty tasks array.",
                 };
             }
+            // Validate unique ids and normalize every status before writing
             const seen = new Set<string>();
             const normalized: TaskItem[] = [];
             const payload: Record<string, unknown> =
@@ -206,6 +232,7 @@ export function taskManagerExecute(args: {
         const list = readTaskList(file);
         const tasks = list.tasks;
 
+        // query: return a single task (taskId) or the list summary with all tasks
         if (action === "query") {
             if (args.taskId) {
                 const task = tasks.find((t) => t.id === args.taskId);
@@ -221,6 +248,7 @@ export function taskManagerExecute(args: {
             return { success: true, action, path: file, ...summaryOf(tasks), tasks };
         }
 
+        // next: pick the first unfinished task whose upstream tasks are all completed
         if (action === "next") {
             const candidate = tasks.find(
                 (t) => normalizeStatus(t.status) !== "completed" && upstreamDone(t, tasks),
@@ -241,6 +269,7 @@ export function taskManagerExecute(args: {
             };
         }
 
+        // update: change a task status and persist the whole list
         if (action === "update") {
             const taskId = args.taskId;
             const status = normalizeStatus(args.status);

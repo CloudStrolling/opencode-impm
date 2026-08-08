@@ -709,6 +709,7 @@ async function exportSession(
  * @param projectRoot the project root directory
  */
 export async function createPromptRecorder(projectRoot: string) {
+    // Reentrancy guards: busy guards the event hook, exporting guards the export refresh
     let busy = false;
     let exporting = false;
 

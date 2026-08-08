@@ -20,6 +20,12 @@
 
 import { execSync } from "child_process";
 
+/**
+ * Execute a git command in the given directory
+ * @param cwd The working directory of the git command
+ * @param command The git arguments (e.g., "status --short")
+ * @returns The trimmed stdout; throws an Error when the command fails
+ */
 function gitExec(cwd: string, command: string): string {
     try {
         return execSync(`git ${command}`, {

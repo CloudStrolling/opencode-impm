@@ -21,6 +21,7 @@
 import { existsSync, readdirSync, statSync } from "fs";
 import { join } from "path";
 
+/** All document types supported by the standard path mapping */
 export type DocType =
     | "project"
     | "sad"
@@ -178,6 +179,7 @@ export function getDocPath(
     }
 }
 
+/** Matches a version directory name: {abbreviation}-v{x.y.z} */
 const VERSION_DIR_RE = /^([a-z0-9_-]+)-v(\d+\.\d+\.\d+)$/;
 
 /** Scan version directories under docs and return the version numbers (no v prefix), sorted ascending */

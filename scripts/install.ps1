@@ -17,16 +17,23 @@
 #   .\scripts\install.ps1                    # install to the current directory
 #   .\scripts\install.ps1 -Target D:\myproj  # install to the specified project
 
+# --- Parameters ----------------------------------------------------------
+# Optional -Target argument: the project directory to install into
 param(
     [string]$Target = ""
 )
 
+# Stop on the first error so a failed install exits with a clear message
 $ErrorActionPreference = "Stop"
 
+# --- Paths ----------------------------------------------------------------
+# Plugin root, the assets directory (commands/agents/skills), and the compiled dist output
 $pluginRoot = Resolve-Path (Join-Path $PSScriptRoot "..")
 $assetsDir = Join-Path $pluginRoot "assets"
 $distDir = Join-Path $pluginRoot "dist"
 
+# --- Target project detection --------------------------------------------
+# Priority: -Target argument > INIT_CWD (npm dependency install) > current directory (local install)
 if ($Target -ne "") {
     $targetRoot = $Target
 } elseif ($env:INIT_CWD -and ((Resolve-Path $env:INIT_CWD) -ne $pluginRoot)) {
@@ -43,6 +50,7 @@ Write-Host "Plugin directory: $pluginRoot"
 Write-Host "Target project: $targetRoot"
 Write-Host ""
 
+# Abort when the assets directory is missing (the script is not running in the plugin directory)
 if (-not (Test-Path $assetsDir)) {
     Write-Error "Error: the assets directory does not exist: $assetsDir"
     exit 1
@@ -50,6 +58,8 @@ if (-not (Test-Path $assetsDir)) {
 
 $opencodeDir = Join-Path $targetRoot ".opencode"
 
+# --- 1. Asset copying -----------------------------------------------------
+# Copy commands/agents/skills into .opencode/
 foreach ($dir in @("commands", "agents", "skills")) {
     $srcDir = Join-Path $assetsDir $dir
     $destDir = Join-Path $opencodeDir $dir
@@ -65,6 +75,8 @@ foreach ($dir in @("commands", "agents", "skills")) {
     Copy-Item -Path $srcDir -Destination $destDir -Recurse -Force
 }
 
+# --- 2. Plugin installation ------------------------------------------------
+# Install the compiled plugin into .opencode/plugins/impm/
 if (Test-Path $distDir) {
     $pluginDest = Join-Path $opencodeDir "plugins\impm"
     Write-Host "Installing local plugin -> .opencode/plugins/impm/ ..."
@@ -103,6 +115,7 @@ if (Test-Path $opencodePkgPath) {
     Write-Host "Generated .opencode/package.json (type: module)"
 }
 
+# --- 3. Plugin configuration ----------------------------------------------
 # Update the opencode.json config (npm install mode registers the plugin name; the local
 # self-install mode is auto-discovered through the entry file)
 $configPath = Join-Path $targetRoot "opencode.json"

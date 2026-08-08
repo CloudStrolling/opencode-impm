@@ -53,11 +53,17 @@ const EXCLUDED_DIRS = new Set([
     ".cache",
 ]);
 
+/** Tool definition (description) exposed to the plugin registry */
 export const projectInfoDefinition = {
     description:
         "Reads the project basic information: parses the project Chinese name, English name, English abbreviation, programming language, project type, and overall introduction from docs/project.md. Use when obtaining the project abbreviation or determining the initialization mode during the initialization phase.",
 };
 
+/**
+ * Read and format the project basic information from docs/project.md
+ * @param args The tool arguments: projectRoot
+ * @returns The parsed project info plus the formatted text on success, or an error result
+ */
 export function projectInfoExecute(args: { projectRoot: string }) {
     try {
         const info = readProjectInfo(args.projectRoot);
@@ -74,11 +80,17 @@ export function projectInfoExecute(args: { projectRoot: string }) {
     }
 }
 
+/** Tool definition (description) exposed to the plugin registry */
 export const isInitDefinition = {
     description:
         "Checks whether the project has been initialized: determines whether docs/project.md and docs/sad.md both exist and are non-empty, and scans the project root to determine whether it is an empty project (no files after excluding system directories such as node_modules, .git, and docs). Use when determining the project type (empty/existing) during the initialization phase.",
 };
 
+/**
+ * Check whether the project is initialized and whether it is an empty project
+ * @param args The tool arguments: projectRoot
+ * @returns The initialization state (initialized, emptyProject, sourceFileCount) and a hint
+ */
 export function isInitExecute(args: { projectRoot: string }) {
     try {
         const root = args?.projectRoot?.trim();
@@ -94,6 +106,7 @@ export function isInitExecute(args: { projectRoot: string }) {
         const projectMdExists = existsSync(projectMdPath);
         const sadMdExists = existsSync(sadMdPath);
 
+        // Count the files outside the excluded system directories to detect an empty project
         let files: string[] = [];
         try {
             files = listFilesRecursive(root).filter((f) => {

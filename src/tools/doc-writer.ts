@@ -29,11 +29,17 @@ import {
     resolveAbbrevSafe,
 } from "../utils/project.js";
 
+/** Tool definition (description) exposed to the plugin registry */
 export const docWriterDefinition = {
     description:
         "Writes project management documents: writes content to documents under docs from the standard paths (project, sad, urs, prd, dbd, api, lld, testcase, task, sql, review, context, cs, ws, etc.), automatically creating directories. docType task validates JSON validity.",
 };
 
+/**
+ * Write a project management document to the standard path
+ * @param args The tool arguments: projectRoot, docType, content, and optional projectName/version/taskId/target
+ * @returns The written path and byte size on success, or { success: false, error }
+ */
 export function docWriterExecute(args: {
     projectRoot: string;
     docType: string;
@@ -51,6 +57,7 @@ export function docWriterExecute(args: {
         const content = String(args.content);
         const target = args.target === "main" ? "main" : "version";
 
+        // Unversioned doc types (project/sad/readme/agent/deploy) live under the docs root; the rest need a version directory
         const needsVersion = !["project", "sad", "readme", "agent", "deploy-build", "deploy-deploy"].includes(docType);
         let abbrev = "";
         let version = args.version;
@@ -70,6 +77,7 @@ export function docWriterExecute(args: {
         }
         version = version ?? "";
 
+        // Validate the JSON format when writing the task list (must be an array, or an object with a non-empty tasks array)
         if (docType === "task") {
             try {
                 const data = JSON.parse(content);
@@ -89,6 +97,7 @@ export function docWriterExecute(args: {
             taskId: args.taskId,
             target,
         });
+        // Create the parent directory when missing, then write the document content
         mkdirSync(dirname(path), { recursive: true });
         writeFileSync(path, content, "utf8");
 

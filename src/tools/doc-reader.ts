@@ -37,11 +37,17 @@ import {
     resolveAbbrevSafe,
 } from "../utils/project.js";
 
+/** Tool definition (description) exposed to the plugin registry */
 export const docReaderDefinition = {
     description:
         "Reads project management documents: reads documents under docs from the standard paths (project, sad, urs, prd, dbd, api, lld, testcase, task, sql, review, context, cs, ws, etc.). When reading the task list (task), returns the task summary and the full content.",
 };
 
+/**
+ * Parse the task list JSON and summarize it by status
+ * @param content The JSON text of the task list
+ * @returns The total count, counts by status, and pending (non-completed) task titles; null when the JSON is invalid
+ */
 function parseTaskSummary(content: string) {
     try {
         const data = JSON.parse(content);
@@ -65,6 +71,11 @@ function parseTaskSummary(content: string) {
     }
 }
 
+/**
+ * Read a project management document from the standard path
+ * @param args The tool arguments: projectRoot, docType, and optional projectName/version/taskId/target
+ * @returns The document content plus metadata on success, or { success: false, error }
+ */
 export function docReaderExecute(args: {
     projectRoot: string;
     docType: string;
@@ -77,6 +88,7 @@ export function docReaderExecute(args: {
         const docType = args.docType as DocType;
         const target = args.target === "main" ? "main" : "version";
 
+        // Unversioned doc types (project/sad/readme/agent/deploy) live under the docs root; the rest need a version directory
         const needsVersion = !["project", "sad", "readme", "agent", "deploy-build", "deploy-deploy"].includes(docType);
         let abbrev = "";
         let version = args.version;
@@ -118,6 +130,7 @@ export function docReaderExecute(args: {
             version,
             content,
         };
+        // For the task list, additionally return a status summary for a quick overview
         if (docType === "task") {
             const summary = parseTaskSummary(content);
             if (summary) {

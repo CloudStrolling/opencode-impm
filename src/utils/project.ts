@@ -24,6 +24,7 @@ import { join } from "path";
 import { compareVersions } from "./version.js";
 import { docsRoot, scanVersionDirs } from "./paths.js";
 
+/** Key fields parsed from docs/project.md */
 export interface ProjectInfo {
     nameCn: string;
     nameEn: string;
@@ -34,6 +35,7 @@ export interface ProjectInfo {
     database: string;
 }
 
+/** ProjectInfo field -> regex matching its label line in docs/project.md (label followed by : or ：) */
 const FIELD_MAP: Array<[keyof ProjectInfo, RegExp]> = [
     ["nameCn", /^\*{0,2}Project Name \(Chinese\)\*{0,2}\s*[:：]\s*(.+)$/i],
     ["nameEn", /^\*{0,2}Project Name \(English\)\*{0,2}\s*[:：]\s*(.+)$/i],

@@ -47,13 +47,24 @@ import { fileURLToPath } from "node:url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+// --- Paths and constants ------------------------------------------------
+// Plugin root (the directory containing package.json), the assets directory holding
+// the resources to copy (commands/agents/skills), and the compiled plugin output (dist/)
 const PLUGIN_ROOT = resolve(__dirname, "..");
 const ASSETS_DIR = join(PLUGIN_ROOT, "assets");
 const DIST_DIR = join(PLUGIN_ROOT, "dist");
 
+// The asset subdirectories copied into .opencode/, and the npm package name registered in opencode.json
 const ASSET_DIRS = ["commands", "agents", "skills"];
 const PACKAGE_NAME = "opencode-impm";
 
+/**
+ * Determine the target project directory.
+ * Priority: --target argument > INIT_CWD (npm dependency install scenario) >
+ * the current working directory (local development install scenario)
+ * @param args The command-line arguments
+ * @returns The absolute path of the target project root
+ */
 function resolveTargetProject(args) {
     const targetIndex = args.indexOf("--target");
     if (targetIndex !== -1 && targetIndex + 1 < args.length) {
@@ -71,6 +82,12 @@ function resolveTargetProject(args) {
     return process.cwd();
 }
 
+/**
+ * Recursively copy a directory tree
+ * @param src The source directory
+ * @param dest The destination directory (created when missing)
+ * @param clean When true, empty the destination first so repeated installs stay idempotent
+ */
 function copyDirRecursive(src, dest, clean = false) {
     if (!existsSync(src)) {
         console.warn(`  Skip: source directory does not exist ${src}`);
@@ -104,6 +121,11 @@ function copyDirRecursive(src, dest, clean = false) {
     }
 }
 
+/**
+ * Ensure .opencode/package.json declares type: module so the generated plugin entry file
+ * (which uses ESM export syntax) is resolved correctly by opencode
+ * @param opencodeDir The .opencode/ directory of the target project
+ */
 function ensureOpenCodePackageJson(opencodeDir) {
     const pkgPath = join(opencodeDir, "package.json");
     let pkg = {};
@@ -121,6 +143,12 @@ function ensureOpenCodePackageJson(opencodeDir) {
     }
 }
 
+/**
+ * Update the target project's opencode.json: ensure the $schema field and register the plugin
+ * name (skipped for the local self-install, where the plugin entry under .opencode/plugins/
+ * is auto-discovered)
+ * @param projectRoot The target project root
+ */
 function updateOpenCodeConfig(projectRoot) {
     const configPath = join(projectRoot, "opencode.json");
 
@@ -152,6 +180,8 @@ function updateOpenCodeConfig(projectRoot) {
 }
 
 function main() {
+    // --- Argument parsing ------------------------------------------------
+    // Parse the command-line arguments (--target) and resolve the install target project
     const args = process.argv.slice(2);
     const targetRoot = resolveTargetProject(args);
 
@@ -164,6 +194,7 @@ function main() {
     console.log(`Target project: ${targetRoot}`);
     console.log("");
 
+    // Abort when the assets directory is missing (the script is not running in the plugin directory)
     if (!existsSync(ASSETS_DIR)) {
         console.error("Error: the assets directory does not exist; make sure this script is run in the opencode-impm plugin directory");
         console.error(`       ${ASSETS_DIR}`);
@@ -172,6 +203,8 @@ function main() {
 
     const opencodeDir = join(targetRoot, ".opencode");
 
+    // --- Asset copying ----------------------------------------------------
+    // 1. Copy commands/agents/skills into .opencode/ (cleaning each target first)
     for (const dir of ASSET_DIRS) {
         const srcDir = join(ASSETS_DIR, dir);
         const destDir = join(opencodeDir, dir);
@@ -186,6 +219,8 @@ function main() {
         copyDirRecursive(srcDir, destDir, true);
     }
 
+    // --- Plugin installation ----------------------------------------------
+    // 2. Install the compiled plugin into .opencode/plugins/impm/
     const pluginDest = join(opencodeDir, "plugins", "impm");
     if (existsSync(DIST_DIR)) {
         console.log("Installing local plugin -> .opencode/plugins/impm/ ...");
@@ -216,6 +251,8 @@ function main() {
 
     console.log("");
 
+    // --- Plugin configuration ---------------------------------------------
+    // 3. Update opencode.json to register the plugin for the consuming project
     console.log("Updating opencode.json config...");
     updateOpenCodeConfig(targetRoot);
 

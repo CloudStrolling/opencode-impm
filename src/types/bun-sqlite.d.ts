@@ -20,8 +20,10 @@
  * the declaration lets TypeScript compile the dynamic import of prompt-recorder.
  */
 declare module "bun:sqlite" {
+    /** Minimal shape of the bun:sqlite Database used by the plugin (read-only queries) */
     export class Database {
         constructor(path: string, options?: { readonly?: boolean });
+        /** Prepare a SQL statement; all()/get() execute it with the given parameters */
         prepare(sql: string): { all(...params: unknown[]): unknown[]; get(...params: unknown[]): unknown };
         close(): void;
     }

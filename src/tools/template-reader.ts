@@ -26,11 +26,18 @@ import { existsSync, readdirSync, readFileSync } from "fs";
 import { fileURLToPath } from "url";
 import { join } from "path";
 
+/** Tool definition (description) exposed to the plugin registry */
 export const templateReaderDefinition = {
     description:
         "Reads template files: reads template content by name from .opencode/skills/template, assets/skills/template, or the plugin's built-in directory (e.g., PROJECT-TEMPLATE.MD, TASK-TEMPLATE.json). Use before generating various documents to read the templates.",
 };
 
+/**
+ * Find a template file in a directory by name (extension-insensitive match)
+ * @param dir The directory to search
+ * @param base The template stem (e.g., PROJECT-TEMPLATE)
+ * @returns The full path of the matched file, or null when not found
+ */
 function matchTemplate(dir: string, base: string): string | null {
     if (!existsSync(dir)) {
         return null;
@@ -47,6 +54,7 @@ function matchTemplate(dir: string, base: string): string | null {
     return null;
 }
 
+/** List the template file names of a directory (skipping dot files) */
 function listTemplates(dir: string): string[] {
     if (!existsSync(dir)) {
         return [];
@@ -54,6 +62,11 @@ function listTemplates(dir: string): string[] {
     return readdirSync(dir).filter((n) => !n.startsWith("."));
 }
 
+/**
+ * Read a template file by name from the standard search directories
+ * @param args The tool arguments: projectRoot and templateName
+ * @returns The template content on success, or an error with the available template list
+ */
 export function templateReaderExecute(args: {
     projectRoot: string;
     templateName: string;
@@ -65,6 +78,7 @@ export function templateReaderExecute(args: {
         }
         const base = name.split(".")[0];
 
+        // Search order: project .opencode, project assets, then the plugin built-in assets
         const searchDirs = [
             join(args.projectRoot, ".opencode", "skills", "template"),
             join(args.projectRoot, "assets", "skills", "template"),
@@ -83,6 +97,7 @@ export function templateReaderExecute(args: {
             }
         }
 
+        // Collect the available templates from every search directory for the error hint
         const available = new Set<string>();
         for (const dir of searchDirs) {
             for (const t of listTemplates(dir)) {

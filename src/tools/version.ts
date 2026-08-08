@@ -26,11 +26,17 @@ import { normalizeVersion, scanVersionDirs, versionDir } from "../utils/paths.js
 import { incrementPatch, isValidVersion } from "../utils/version.js";
 import { latestVersion, resolveAbbrev } from "../utils/project.js";
 
+/** Tool definition (description) exposed to the plugin registry */
 export const versionDefinition = {
     description:
         "Version management: action=current gets the latest version number under docs; action=next increments the patch of the largest version by 1 (hintVersion can be passed to specify a version); action=init creates the version directory docs/{project abbreviation}-v{version} (uses the specified version when hintVersion is passed, otherwise automatically takes the next version). Use when creating a version directory or determining the current version number.",
 };
 
+/**
+ * Pick the version for next/init: the hint version when valid, otherwise the latest version + 1 (0.0.1 when none exists)
+ * @param args projectRoot, abbrev, and the optional hint version
+ * @returns The version string, or null when the hint version is invalid
+ */
 function pickVersion(args: {
     projectRoot: string;
     abbrev: string;
@@ -51,6 +57,11 @@ function pickVersion(args: {
     return "0.0.1";
 }
 
+/**
+ * Execute a version management action (current/next/init)
+ * @param args The tool arguments: projectRoot, action, and optional hintVersion/projectName
+ * @returns The version information or the created version directory, or an error result
+ */
 export function versionExecute(args: {
     projectRoot: string;
     action: "current" | "next" | "init";
@@ -114,6 +125,7 @@ export function versionExecute(args: {
                     error: "Invalid hintVersion format (should be x.y.z).",
                 };
             }
+            // Create the version directory (reuse it when it already exists)
             const dir = versionDir(args.projectRoot, abbrev, version);
             const existed = existsSync(dir);
             if (!existed) {
@@ -141,10 +153,12 @@ export function versionExecute(args: {
     }
 }
 
+/** List all version numbers of the project, sorted descending (latest first) */
 function listAll(projectRoot: string, abbrev: string): string[] {
     return scanVersionDirs(projectRoot, abbrev).sort(compareDesc);
 }
 
+/** Descending numeric-aware comparison of version strings */
 function compareDesc(a: string, b: string): number {
     return b.localeCompare(a, undefined, { numeric: true });
 }
