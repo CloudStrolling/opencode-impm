@@ -1,0 +1,92 @@
+{
+  "opencode-zen-free": {
+    "description": "opencode-zen free tier: all agents use opencode-zen provider free models (big-pickle etc.), ideal for zero-cost experience, watch rate limits when quota is limited.",
+    "agents": {
+      "pm": { "model": "opencode-zen/big-pickle", "reasoning_effort": "low" },
+      "scm": { "model": "opencode-zen/big-pickle", "reasoning_effort": "low" },
+      "ba": { "model": "opencode-zen/big-pickle", "reasoning_effort": "high" },
+      "sa": { "model": "opencode-zen/big-pickle", "reasoning_effort": "max" },
+      "tl": { "model": "opencode-zen/big-pickle", "reasoning_effort": "high" },
+      "dba": { "model": "opencode-zen/big-pickle", "reasoning_effort": "max" },
+      "te": { "model": "opencode-zen/big-pickle", "reasoning_effort": "high" },
+      "cs": { "model": "opencode-zen/big-pickle", "reasoning_effort": "low" },
+      "ws": { "model": "opencode-zen/big-pickle", "reasoning_effort": "low" },
+      "sse": { "model": "opencode-zen/big-pickle", "reasoning_effort": "high" },
+      "fee": { "model": "opencode-zen/big-pickle", "reasoning_effort": "high" },
+      "bee": { "model": "opencode-zen/big-pickle", "reasoning_effort": "max" },
+      "dw": { "model": "opencode-zen/big-pickle", "reasoning_effort": "high" }
+    }
+  },
+  "opencode-go-lite": {
+    "description": "opencode-go lite tier: all agents use the cheapest opencode-go/deepseek-v4-flash with reduced reasoning depth across the board, targeting lowest cost and fastest response.",
+    "agents": {
+      "pm": { "model": "opencode-go/deepseek-v4-flash", "reasoning_effort": "low" },
+      "scm": { "model": "opencode-go/deepseek-v4-flash", "reasoning_effort": "low" },
+      "ba": { "model": "opencode-go/deepseek-v4-flash", "reasoning_effort": "high" },
+      "sa": { "model": "opencode-go/deepseek-v4-flash", "reasoning_effort": "max" },
+      "tl": { "model": "opencode-go/deepseek-v4-flash", "reasoning_effort": "high" },
+      "dba": { "model": "opencode-go/deepseek-v4-flash", "reasoning_effort": "max" },
+      "te": { "model": "opencode-go/deepseek-v4-flash", "reasoning_effort": "high" },
+      "cs": { "model": "opencode-go/deepseek-v4-flash", "reasoning_effort": "low" },
+      "ws": { "model": "opencode-go/deepseek-v4-flash", "reasoning_effort": "low" },
+      "sse": { "model": "opencode-go/deepseek-v4-flash", "reasoning_effort": "high" },
+      "fee": { "model": "opencode-go/deepseek-v4-flash", "reasoning_effort": "medium" },
+      "bee": { "model": "opencode-go/deepseek-v4-flash", "reasoning_effort": "medium" },
+      "dw": { "model": "opencode-go/deepseek-v4-flash", "reasoning_effort": "medium" }
+    }
+  },
+  "opencode-go-balance": {
+    "description": "opencode-go balanced tier (default recommendation): high-load roles use deepseek-v4-pro + high reasoning, query/lightweight roles use flash + low reasoning, balancing cost and quality.",
+    "agents": {
+      "pm": { "model": "opencode-go/deepseek-v4-flash", "reasoning_effort": "low" },
+      "scm": { "model": "opencode-go/deepseek-v4-flash", "reasoning_effort": "low" },
+      "ba": { "model": "opencode-go/deepseek-v4-pro", "reasoning_effort": "high" },
+      "sa": { "model": "opencode-go/deepseek-v4-pro", "reasoning_effort": "max" },
+      "tl": { "model": "opencode-go/deepseek-v4-pro", "reasoning_effort": "high" },
+      "dba": { "model": "opencode-go/deepseek-v4-flash", "reasoning_effort": "max" },
+      "te": { "model": "opencode-go/deepseek-v4-flash", "reasoning_effort": "high" },
+      "cs": { "model": "opencode-go/deepseek-v4-flash", "reasoning_effort": "low" },
+      "ws": { "model": "opencode-go/deepseek-v4-flash", "reasoning_effort": "low" },
+      "sse": { "model": "opencode-go/deepseek-v4-pro", "reasoning_effort": "high" },
+      "fee": { "model": "opencode-go/deepseek-v4-flash", "reasoning_effort": "high" },
+      "bee": { "model": "opencode-go/deepseek-v4-flash", "reasoning_effort": "max" },
+      "dw": { "model": "opencode-go/deepseek-v4-flash", "reasoning_effort": "high" }
+    }
+  },
+  "opencode-go-optimize": {
+    "description": "opencode-go optimized tier: quality-first approach, coding/design and documentation roles use deepseek-v4-pro where possible, query and orchestration roles still use flash.",
+    "agents": {
+      "pm": { "model": "opencode-go/deepseek-v4-flash", "reasoning_effort": "low" },
+      "scm": { "model": "opencode-go/deepseek-v4-flash", "reasoning_effort": "low" },
+      "ba": { "model": "opencode-go/deepseek-v4-pro", "reasoning_effort": "high" },
+      "sa": { "model": "opencode-go/deepseek-v4-pro", "reasoning_effort": "max" },
+      "tl": { "model": "opencode-go/deepseek-v4-pro", "reasoning_effort": "high" },
+      "dba": { "model": "opencode-go/deepseek-v4-pro", "reasoning_effort": "max" },
+      "te": { "model": "opencode-go/deepseek-v4-flash", "reasoning_effort": "high" },
+      "cs": { "model": "opencode-go/deepseek-v4-flash", "reasoning_effort": "low" },
+      "ws": { "model": "opencode-go/deepseek-v4-flash", "reasoning_effort": "low" },
+      "sse": { "model": "opencode-go/deepseek-v4-pro", "reasoning_effort": "high" },
+      "fee": { "model": "opencode-go/deepseek-v4-pro", "reasoning_effort": "high" },
+      "bee": { "model": "opencode-go/deepseek-v4-pro", "reasoning_effort": "max" },
+      "dw": { "model": "opencode-go/deepseek-v4-flash", "reasoning_effort": "high" }
+    }
+  },
+  "custom": {
+    "description": "Custom tier: manually edit this preset to customize each agent's model and reasoning depth. When installing the plugin with custom, existing agent configurations are not overwritten (updating the plugin does not affect your manual settings).",
+    "agents": {
+      "pm": { "model": "opencode-go/deepseek-v4-flash", "reasoning_effort": "low" },
+      "scm": { "model": "opencode-go/deepseek-v4-flash", "reasoning_effort": "low" },
+      "ba": { "model": "opencode-go/deepseek-v4-pro", "reasoning_effort": "high" },
+      "sa": { "model": "opencode-go/deepseek-v4-pro", "reasoning_effort": "max" },
+      "tl": { "model": "opencode-go/deepseek-v4-pro", "reasoning_effort": "high" },
+      "dba": { "model": "opencode-go/deepseek-v4-flash", "reasoning_effort": "max" },
+      "te": { "model": "opencode-go/deepseek-v4-flash", "reasoning_effort": "high" },
+      "cs": { "model": "opencode-go/deepseek-v4-flash", "reasoning_effort": "low" },
+      "ws": { "model": "opencode-go/deepseek-v4-flash", "reasoning_effort": "low" },
+      "sse": { "model": "opencode-go/deepseek-v4-pro", "reasoning_effort": "high" },
+      "fee": { "model": "opencode-go/deepseek-v4-flash", "reasoning_effort": "high" },
+      "bee": { "model": "opencode-go/deepseek-v4-flash", "reasoning_effort": "max" },
+      "dw": { "model": "opencode-go/deepseek-v4-flash", "reasoning_effort": "high" }
+    }
+  }
+}

@@ -5,54 +5,54 @@ description: Commits all files and directories generated in the requirements ana
 
 # impm-analysis-commit Skill
 
-## Trigger Words
-Commit, git commit, requirements analysis commit, analysis phase complete, impm-analysis-commit
+## Triggers
+commit, git commit, requirements analysis commit, analysis phase complete, impm-analysis-commit
 
-## When to Use
-Use after the task list has been generated (after impm-task-create); as the last step of the requirements analysis phase (phase 2): commit all files and directories generated in this phase to git, record the progress, and report to the user that the requirements analysis phase is fully complete.
+## When to use
+Use when the requirements traceability matrix is complete (after impm-rtm-create), as the last step of the requirements analysis phase (phase 2): commit all the files and directories generated in this phase (including rtm.md) to git, record the progress, and report to the user that the requirements analysis phase is fully complete.
 
-## Executing Agent
-This skill is executed by the SCM subagent (subagent_type=scm). Load this skill with the Skill tool when executing.
+## Execution role
+This skill is executed by the Software Configuration Engineer (subagent_type=scm) subagent, who loads this skill with the Skill tool.
 
-## Dispatch Instructions (MUST be followed when the PM/upper-level orchestrator launches this skill)
-1. Launch method: use the task tool to launch a subagent; subagent_type MUST be `scm`; the PM or orchestrator must not execute this skill's content on its own.
-2. The task prompt MUST carry the context (indispensable): the absolute path of the project root (projectRoot), the project English abbreviation ({project abbreviation}), the current version ({current version}), the original user input $ARGUMENTS (including the file paths mentioned by the user), and the skill name (impm-analysis-commit; require the subagent to load this skill with the Skill tool first before executing).
-3. Completion requirement: wait for the subagent to return the completion result, verify the output files and the version_progress.md progress records, and only proceed to the next step when everything is correct.
+## Dispatching instructions (the PM/orchestrator must comply when launching this skill)
+1. Launch method: start the subagent with the task tool, subagent_type must be `scm`; the PM or orchestrator is prohibited from executing this skill's content on its behalf.
+2. Mandatory context for the prompt (none may be omitted): absolute path of the project root (projectRoot), project abbreviation ({project abbreviation}), current version number ({current version}), original user input $ARGUMENTS (including the file paths mentioned by the user), skill name (impm-analysis-commit, require the subagent to load this skill with the Skill tool before executing).
+3. Completion requirement: after waiting for the subagent to return the completion result, verify the output files and the version_progress.md progress records; proceed to the next step only when all are correct.
 
-## Key Variables and How to Get Them
-| Variable | Description | How to get it |
-| Project Chinese name | The Chinese name of the project | Read from docs/project.md via impm_project_info |
-| Project English name | The English name of the project | Read from docs/project.md via impm_project_info |
-| Project abbreviation | The project's English abbreviation, used to construct all document paths | Read from docs/project.md via impm_project_info |
-| Current version | The version currently being executed | Get via impm_version action=current, or infer from the version directory name |
+## Key variable definitions and values
+| Variable | Description | How to obtain |
+| Project Name (Chinese) | The Chinese name of the project | Read from docs/project.md via impm_project_info |
+| Project Name (English) | The English name of the project | Read from docs/project.md via impm_project_info |
+| Project Abbreviation | The English abbreviation of the project, used to build all document paths | Read from docs/project.md via impm_project_info |
+| Current Version | The version number currently being executed | Get via impm_version action=current, or infer from the version directory name |
 
-## Execution Requirements
-1. Execute strictly in the order of the content in the execution steps: no skipping, no out-of-order execution, no parallel execution, no merged execution of any step.
-2. Only perform the operations specified in this skill; do not do work unrelated to the task.
-3. All document paths must be constructed with {project abbreviation} and {current version}; do not fabricate file names.
+## Execution requirements
+1. Execute strictly in the content and order of the execution steps: do not skip, reorder, parallelize, or merge any step.
+2. Only perform the operations specified by this skill; do not do work unrelated to the task.
+3. All document paths must be built from {project abbreviation} and {current version}; do not invent file names.
 4. Use impm_* tools to obtain information; do not fabricate tool results.
 5. Use English throughout.
-6. After each step, verify that the output file exists and its content is correct.
+6. After each step completes, verify that the output file exists and its content is correct.
 
-## Execution Steps
+## Execution steps
 
-### Step 1: Confirm the working directory status
-Call impm_git (action=status) to confirm the working directory status, check that the files and directories generated in the requirements analysis phase are all in place, and confirm the branch is {project abbreviation}-v{current version}.
+### Step 1: Confirm the working tree status
+Call impm_git (action=status) to confirm the working tree status, check whether the files and directories generated in the requirements analysis phase are all in place, and confirm the branch is {project abbreviation}-v{current version}.
 
 ### Step 2: Commit to git
-Call impm_git (action=commit, message={project abbreviation}-v{current version}-Requirements analysis) to commit all files and directories generated in the requirements analysis phase to git. The commit includes: the documents, task list, and progress file generated under the version directory docs/{project abbreviation}-v{current version}/, as well as the master documents updated in this phase (e.g., the modification of docs/{project abbreviation}-sad.md). Confirm the commit succeeded.
+Call impm_git (action=commit, message={project abbreviation}-v{current version}-requirements analysis) to commit all the files and directories generated in the requirements analysis phase to git. The commit includes: the documents generated under the version directory docs/{project abbreviation}-v{current version}/ (including rtm.md), the task list, the progress file, and the master documents updated in this phase (such as the modifications to docs/{project abbreviation}-sad.md). Confirm the commit succeeds.
 
 ### Step 3: Record progress
-Call impm_progress (action=add, stepName=impm-analysis-commit, status=completed) to insert a new row in the first position of the table in the version progress file docs/{project abbreviation}-v{current version}/version_progress.md, and confirm the progress row has been recorded.
+Call impm_progress (action=add, stepName=impm-analysis-commit, status=completed) to insert a new row at the first position of the table in the version progress file docs/{project abbreviation}-v{current version}/version_progress.md, and confirm the progress row is recorded.
 
 ### Step 4: Report to the user
-Report to the user that the requirements analysis phase is fully complete, listing the committed version, the commit message, and the phase output summary.
+Report to the user that the requirements analysis phase is fully complete, and list the committed version number, commit information, and the phase deliverable summary.
 
 ## Deliverables
-- Git commit record: {project abbreviation}-v{current version}-Requirements analysis
-- Updated docs/{project abbreviation}-v{current version}/version_progress.md (including the status of all phase steps)
+- git commit record: {project abbreviation}-v{current version}-requirements analysis
+- Updated docs/{project abbreviation}-v{current version}/version_progress.md (with the statuses of all phase steps)
 
-## Next Steps
-- To continue with the next step (enter the coding development phase), enter /impm-coding
-- To re-run all steps of this phase, enter /impm-docs
+## After completion
+- To proceed to the next step (enter the coding development phase), input /impm-coding
+- To re-execute all steps of this phase, input /impm-docs
 <!-- SPDX-License-Identifier: Apache-2.0 / Copyright 2026 jenemy8023 <jenemy8023@163.com> -->

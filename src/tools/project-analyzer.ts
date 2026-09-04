@@ -16,41 +16,16 @@
 
 /**
  * impm_project_analyzer tool
- * Scans source code directories and generates a project map Markdown (files, functions, and classes).
- * Used for reverse-engineering existing projects during initialization and for impm-project-update to update the project map.
+ * Scans the source code directories and generates a project map Markdown (list of files, functions
+ * and classes). Used for reverse-engineering the structure of existing projects during initialization
+ * and for updating the project map via impm-project-update.
  */
 
 import { existsSync, readdirSync, readFileSync, statSync } from "fs";
 import { join, relative } from "path";
-import { listFilesRecursive } from "../utils/paths.js";
+import { EXCLUDED_DIRS, listFilesRecursive } from "../utils/paths.js";
 
-/** Default excluded directories */
-const DEFAULT_EXCLUDED = new Set([
-    "node_modules",
-    ".git",
-    "docs",
-    "dist",
-    "build",
-    "coverage",
-    ".opencode",
-    "assets",
-    "deploy",
-    ".idea",
-    ".vscode",
-    "__pycache__",
-    ".venv",
-    "venv",
-    "target",
-    "out",
-    "bin",
-    "obj",
-    ".next",
-    ".nuxt",
-    "vendor",
-    ".cache",
-]);
-
-/** Code file extension -> language */
+/** Code file extension → language */
 const EXT_LANG: Record<string, string> = {
     ".ts": "TypeScript",
     ".tsx": "TypeScript",
@@ -91,7 +66,7 @@ function extractSymbols(content: string, ext: string): string[] {
         case ".jsx":
             add(/^\s*(?:export\s+)?(?:default\s+)?(?:async\s+)?function\s+([A-Za-z_$][\w$]*)/gm);
             add(/^\s*(?:export\s+)?(?:default\s+)?class\s+([A-Za-z_$][\w$]*)/gm);
-            add(/^\s*(?:export\s+)?const\s+([A-Za-z_$][\w$]*)\s*=\s*(?:async\s*)?\([^)]*\)\s*=>/gm);
+            add(/^\s*(?:export\s+)?const\s+([A-Za-z_$][\w$]*)\s*=\s*(?:async\s*)?(?:\([^)]*\)|[A-Za-z_$][\w$]*)\s*=>/gm);
             break;
         case ".py":
             add(/^\s*(?:async\s+)?def\s+([A-Za-z_]\w*)/gm);
@@ -130,41 +105,36 @@ function extractSymbols(content: string, ext: string): string[] {
     return [...new Set(symbols)];
 }
 
-/** Extract the first comment line of a file as its description */
+/** Extract the first comment line of the file as the description (skip shebang lines; a shebang is not a comment) */
 function firstComment(content: string, ext: string): string {
     const line = content
         .split(/\r?\n/)
-        .find((l) => /^\s*(\/\/|\*|#|--|;)/.test(l.trim()));
+        .find((l) => {
+            const t = l.trim();
+            return !/^#!/.test(t) && /^\s*(\/\/|\*|#|--|;)/.test(t);
+        });
     if (!line) {
         return "";
     }
     return line.trim().replace(/^(\/\/|\*|#|--|;)\s*/, "").slice(0, 80);
 }
 
-/** Tool definition (description) exposed to the plugin registry */
 export const projectAnalyzerDefinition = {
     description:
-        "Scans source code directories to generate a project map: lists the code files under each directory and their functions/classes (recognized by language). Use for reverse-engineering the structure of existing projects during initialization and for updating the project map.",
+        "Scan the source code directories to generate a project map: list the code files under each directory and their function/class lists (recognized by language). Use for reverse-engineering the structure of existing projects during initialization and for updating the project map.",
 };
 
-/**
- * Scan the source directories and generate a project map Markdown
- * @param args The tool arguments: projectRoot, and optional sourceDirs/excludeDirs
- * @returns { success, sourceDirs, fileCount, map } on success, or { success: false, error }
- */
 export function projectAnalyzerExecute(args: {
     projectRoot: string;
     sourceDirs?: string[];
     excludeDirs?: string[];
 }) {
     try {
-        // Merge the user-provided exclusion list with the default excluded directories
         const extraExcluded = new Set(
             (args.excludeDirs ?? []).map((d) => d.trim()).filter(Boolean),
         );
-        const excluded = new Set([...DEFAULT_EXCLUDED, ...extraExcluded]);
+        const excluded = new Set([...EXCLUDED_DIRS, ...extraExcluded]);
 
-        // Use the given source directories, or auto-detect the top-level directories of the project
         let rootDirs: string[];
         if (args.sourceDirs && args.sourceDirs.length > 0) {
             rootDirs = args.sourceDirs;
@@ -175,7 +145,7 @@ export function projectAnalyzerExecute(args: {
             rootDirs = top.filter((n) => !excluded.has(n));
         }
 
-        // Collect the code/config files under each source directory, honoring the exclusion list
+        // Collect all code/config files under the target directories (recognize the language by extension)
         const files: Array<{ path: string; lang: string }> = [];
         for (const dir of rootDirs) {
             const full = join(args.projectRoot, dir);
@@ -190,21 +160,21 @@ export function projectAnalyzerExecute(args: {
                 if (parts.some((p) => excluded.has(p))) {
                     continue;
                 }
-                const ext = parts[parts.length - 1].slice(parts[parts.length - 1].lastIndexOf(".")).toLowerCase();
+                const finalName = parts[parts.length - 1];
+                const dot = finalName.lastIndexOf(".");
+                const ext = dot > 0 ? finalName.slice(dot).toLowerCase() : "";
                 if (EXT_LANG[ext] || /\.(md|json|ya?ml|toml|ini|cfg|txt)$/i.test(f)) {
                     files.push({ path: f, lang: EXT_LANG[ext] ?? "config" });
                 }
             }
         }
 
-        // Sort the files for a stable, deterministic project map
         files.sort((a, b) => a.path.localeCompare(b.path));
 
-        const lines = ["# Project Map", "", `Scanned ${files.length} files.`, ""];
+        const lines = ["# Project Map", "", `Scanned ${files.length} files in total.`, ""];
         let currentGroup = "";
         for (const f of files) {
             const rel = relative(args.projectRoot, f.path).replace(/\\/g, "/");
-            // Group the entries by their top-level directory so the map is easy to browse
             const group = rel.includes("/") ? rel.split("/")[0] : "(root)";
             if (group !== currentGroup) {
                 currentGroup = group;
@@ -218,14 +188,14 @@ export function projectAnalyzerExecute(args: {
                 const content = readFileSync(f.path, "utf8").slice(0, 200_000);
                 const desc = firstComment(content, f.path.slice(f.path.lastIndexOf(".")));
                 if (desc) {
-                    entry += ` - ${desc}`;
+                    entry += ` — ${desc}`;
                 }
                 const symbols = extractSymbols(content, f.path.slice(f.path.lastIndexOf(".")));
                 if (symbols.length > 0) {
-                    entry += `: ${symbols.slice(0, 20).join(", ")}${symbols.length > 20 ? "..." : ""}`;
+                    entry += `: ${symbols.slice(0, 20).join(", ")}${symbols.length > 20 ? "…" : ""}`;
                 }
             } catch {
-                // Binary or unreadable file; skip extraction
+                // Binary or unreadable file, skip extraction
             }
             lines.push(entry);
         }

@@ -15,7 +15,7 @@
  */
 
 /**
- * Project information utilities: parse the key fields of docs/project.md and infer the project abbreviation.
+ * Project information utility: parses key fields from docs/project.md, infers project English abbreviation.
  */
 
 import { existsSync, readFileSync } from "fs";
@@ -24,7 +24,6 @@ import { join } from "path";
 import { compareVersions } from "./version.js";
 import { docsRoot, scanVersionDirs } from "./paths.js";
 
-/** Key fields parsed from docs/project.md */
 export interface ProjectInfo {
     nameCn: string;
     nameEn: string;
@@ -35,7 +34,7 @@ export interface ProjectInfo {
     database: string;
 }
 
-/** ProjectInfo field -> regex matching its label line in docs/project.md (label followed by : or ：) */
+/** project.md field name → parsing regex mapping table (line-by-line matching) */
 const FIELD_MAP: Array<[keyof ProjectInfo, RegExp]> = [
     ["nameCn", /^\*{0,2}Project Name \(Chinese\)\*{0,2}\s*[:：]\s*(.+)$/i],
     ["nameEn", /^\*{0,2}Project Name \(English\)\*{0,2}\s*[:：]\s*(.+)$/i],
@@ -46,12 +45,12 @@ const FIELD_MAP: Array<[keyof ProjectInfo, RegExp]> = [
     ["database", /^\*{0,2}Database Product\*{0,2}\s*[:：]\s*(.+)$/i],
 ];
 
-/** Read docs/project.md and parse its key fields */
+/** Read docs/project.md and parse key fields */
 export function readProjectInfo(projectRoot: string): ProjectInfo {
     const file = join(docsRoot(projectRoot), "project.md");
     if (!existsSync(file)) {
         throw new Error(
-            "docs/project.md does not exist. Please run /impm-init-project (or /impm-init) to complete the project initialization first.",
+            "docs/project.md does not exist. Please run /impm-init-project (or /impm-init) first to complete project initialization.",
         );
     }
     const content = readFileSync(file, "utf8");
@@ -72,6 +71,7 @@ export function readProjectInfo(projectRoot: string): ProjectInfo {
             }
         }
     }
+    // When the abbreviation is not filled in the document, try to infer from the version directory name (docs/{abbrev}-v{x.y.z})
     if (!info.abbrev) {
         const inferred = inferAbbrevFromDirs(projectRoot);
         if (inferred) {
@@ -81,14 +81,15 @@ export function readProjectInfo(projectRoot: string): ProjectInfo {
     return info;
 }
 
-/** Infer the abbreviation from version directory names: docs/{abbreviation}-v{x.y.z} */
+/** Infer abbreviation from version directory name: docs/{abbrev}-v{x.y.z} */
 export function inferAbbrevFromDirs(projectRoot: string): string | null {
     const docs = docsRoot(projectRoot);
     if (!existsSync(docs)) {
         return null;
     }
     for (const name of readdirSync(docs)) {
-        const m = /^([a-z0-9_-]+)-v\d+\.\d+\.\d+$/.exec(name);
+        // Abbreviation is case-insensitive, aligned with character set allowed by resolveAbbrev
+        const m = /^([a-z0-9_-]+)-v\d+\.\d+\.\d+$/i.exec(name);
         if (m) {
             return m[1];
         }
@@ -97,10 +98,10 @@ export function inferAbbrevFromDirs(projectRoot: string): string | null {
 }
 
 /**
- * Resolve the project abbreviation, with priority:
- *   1. the projectName argument (if it is an ASCII identifier such as impm)
- *   2. the Project Abbreviation field in docs/project.md
- *   3. inferred from version directory names (docs/{abbreviation}-v{x.y.z})
+ * Resolve project English abbreviation, priority:
+ *   1. projectName parameter (if it is an ASCII identifier, e.g. impm)
+ *   2. Project English abbreviation filled in docs/project.md
+ *   3. Infer from version directory name (docs/{abbrev}-v{x.y.z})
  */
 export function resolveAbbrev(
     projectRoot: string,
@@ -115,18 +116,18 @@ export function resolveAbbrev(
             return info.abbrev;
         }
     } catch {
-        // project.md does not exist; try the other ways
+        // project.md does not exist, continue trying other methods
     }
     const inferred = inferAbbrevFromDirs(projectRoot);
     if (inferred) {
         return inferred;
     }
     throw new Error(
-        "Cannot determine the project abbreviation: provide the projectName (project abbreviation) argument, or run /impm-init-project to generate docs/project.md first.",
+        "Unable to determine project English abbreviation: please provide the projectName (project English abbreviation) parameter, or run /impm-init-project first to generate docs/project.md.",
     );
 }
 
-/** Abbreviation resolution that does not throw (returns null on failure) */
+/** Safe abbreviation resolution that does not throw (returns null on failure) */
 export function resolveAbbrevSafe(
     projectRoot: string,
     projectName?: string,
@@ -138,7 +139,7 @@ export function resolveAbbrevSafe(
     }
 }
 
-/** Get the current latest version number (null when there are no version directories) */
+/** Get the latest version number (returns null if no version directory exists) */
 export function latestVersion(
     projectRoot: string,
     abbrev: string,
@@ -156,14 +157,14 @@ export function latestVersion(
     return max;
 }
 
-/** Convert project info into display text */
+/** Convert project info to display text */
 export function formatProjectInfo(info: ProjectInfo): string {
     return [
-        `Project Name (Chinese): ${info.nameCn || "(not filled in)"}`,
-        `Project Name (English): ${info.nameEn || "(not filled in)"}`,
-        `Project Abbreviation: ${info.abbrev || "(not filled in)"}`,
-        `Programming Language: ${info.language || "(not filled in)"}`,
-        `Project Type: ${info.type || "(not filled in)"}`,
-        `Database Product: ${info.database || "(not filled in)"}`,
+        `Project Chinese Name: ${info.nameCn || "(not filled)"}`,
+        `Project English Name: ${info.nameEn || "(not filled)"}`,
+        `Project English Abbreviation: ${info.abbrev || "(not filled)"}`,
+        `Programming Language: ${info.language || "(not filled)"}`,
+        `Project Type: ${info.type || "(not filled)"}`,
+        `Database Product: ${info.database || "(not filled)"}`,
     ].join("\n");
 }

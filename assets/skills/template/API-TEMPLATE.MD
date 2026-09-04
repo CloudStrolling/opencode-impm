@@ -10,31 +10,31 @@
 | API-001 |  |  |  |  |
 
 ## 2. API Versioning Strategy
-(URL version paths, version negotiation method, compatibility policy.)
+(URL version path, version negotiation approach, compatibility strategy.)
 
-## 3. Authentication and Authorization
+## 3. Authentication and Authorization Mechanism
 (Authentication method, token passing, role permissions, expiration and refresh.)
 
-## 4. Common Error Code Definitions
+## 4. Common Error Code Definition
 | Error Code | Description |
 | --- | --- |
 
-## 5. Detailed API Definitions
+## 5. API Detailed Definition
 ### 5.1 API Name (API-001)
-**Endpoint**: `GET /api/example`
+**API**: `GET /api/example`
 **Functional Description**:
 **Request Headers**:
 | Name | Type | Required | Description |
 | --- | --- | --- | --- |
 **Request Parameters**:
-| Parameter Name | Type | Required | Location | Description |
+| Parameter | Type | Required | Location | Description |
 | --- | --- | --- | --- | --- |
 **Request Example**:
 ```json
 {}
 ```
 **Response Parameters**:
-| Parameter Name | Type | Description |
+| Parameter | Type | Description |
 | --- | --- | --- |
 **Response Example**:
 ```json
@@ -45,12 +45,12 @@
 | --- | --- |
 
 ## 6. Status Code Mapping
-(Mapping between HTTP status codes and business error codes.)
+(Mapping relationship between HTTP status codes and business error codes.)
 
 ## 7. Rate Limiting Strategy
-(Rate limiting rules, thresholds, and handling when limits are exceeded.)
+(Rate limiting rules, thresholds, handling of exceeded limits.)
 
-## 8. Sample Code
-(Code examples in various languages.)
+## 8. Example Code
+(Invocation examples for each language.)
 
 <!-- SPDX-License-Identifier: Apache-2.0 / Copyright 2026 jenemy8023 <jenemy8023@163.com> -->

@@ -9,7 +9,7 @@ desktop.ini
 # Linux
 *~
 
-# ===================== Common IDE / Editors =====================
+# ===================== General IDE / Editors =====================
 # JetBrains family (IntelliJ IDEA / GoLand / CLion / PyCharm / WebStorm / PhpStorm / Rider, etc.)
 .idea/
 *.iml
@@ -32,7 +32,7 @@ out/
 # Atom
 .atom/
 
-# ===================== Other IDE / Editors (niche) =====================
+# ===================== Other IDEs / Editors (less common) =====================
 # Eclipse
 .metadata/
 .settings/
@@ -163,12 +163,12 @@ gemini-*.log
 .continue/
 .continueignore
 
-# AI generic temporary files
+# AI general temporary files
 ai-tmp/
 ai-generated-temp/
 *.ai-backup
 
-# ===================== Front-end / Node.js =====================
+# ===================== Frontend / Node.js =====================
 # Dependencies
 node_modules/
 package-lock.json
@@ -183,7 +183,7 @@ build/
 output/
 coverage/
 
-# Logs, caches
+# Logs, cache
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -191,7 +191,7 @@ yarn-error.log*
 .npm
 .eslintcache
 
-# Compilation output
+# Compiled output
 *.tsbuildinfo
 *.js.map
 *.d.ts.map
@@ -227,7 +227,7 @@ pom.xml.releaseBackup
 .gradle/
 gradle-app.setting
 !gradle-wrapper.jar
-# Compiled classes
+# compiled class
 *.class
 *.jar
 *.war
@@ -247,10 +247,10 @@ Release/
 *.lib
 
 # ===================== Rust =====================
-# Compilation output (/target/ only matches the root directory, no conflict with Maven's target/)
+# Compiled output (/target/ only matches the root directory and does not conflict with Maven's target/)
 /target/
 *.rs.bk
-# Cargo.lock: usually ignored for libraries; committing is recommended for applications
+# Cargo.lock: usually ignored for libraries; recommended to commit for applications
 Cargo.lock
 
 # ===================== Go =====================
@@ -259,7 +259,7 @@ Cargo.lock
 *.out
 *.prof
 coverage.out
-# Compilation output (macOS dynamic library)
+# Compiled output (macOS dynamic library)
 *.dylib
 
 # ===================== PHP =====================
@@ -275,16 +275,16 @@ composer.phar
 .flutter-plugins
 .flutter-plugins-dependencies
 
-# ===================== Database / Cache / Logs / Temp =====================
+# ===================== Database / Cache / Logs / Temporary =====================
 # Logs
 *.log
 logs/
 log/
-# Databases
+# Database
 *.db
 *.sqlite
 *.sqlite3
-# Caches, temporary files
+# Cache, temporary files
 tmp/
 temp/
 .cache/

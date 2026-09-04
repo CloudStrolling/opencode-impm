@@ -7,45 +7,45 @@
 ## 1. Product Background
 ### 1.1 Project Background
 ### 1.2 Product Goals
-### 1.3 Core Design Principles
+### 1.3 Core Design Concept
 
 ## 2. Target Users
-| User Role | Usage Scenario | Core Needs |
+| User Role | Use Scenario | Core Need |
 | --- | --- | --- |
 
 ## 3. Feature List
-| Feature ID | Feature Name | Module | Priority | Version Scope |
+| Feature ID | Feature Name | Belonging Module | Priority | Version Scope |
 | --- | --- | --- | --- | --- |
 | F-001 |  |  |  |  |
 
-## 4. Detailed Feature Descriptions
+## 4. Detailed Feature Description
 ### 4.1 Feature Name
-#### Functional Description
+#### Feature Description
 #### Business Rules
-#### Page Prototype Description (or Prototype Location)
+#### Page Prototype Description (or prototype location)
 
-## 5. Business Flow Diagrams
+## 5. Business Flow Diagram
 (Use Mermaid or reference a flow diagram file.)
 
 ## 6. Data Requirements
 (Describe the data entities and data items involved in the features.)
 
 ## 7. Acceptance Criteria
-(Overall acceptance criteria for this version, aligned with the user story acceptance criteria.)
+(Overall acceptance criteria for this version, echoing the user story acceptance criteria.)
 
 ## 8. User Stories
 ### US-001: Story Title
 #### Story Description
 As a (role), I want (feature), so that (value).
-#### Preconditions
+#### Prerequisites
 #### Acceptance Criteria
 - [ ] Given ... When ... Then ...
-#### Edge Cases and Error Handling
+#### Boundary Cases and Error Handling
 | Scenario | Expected Handling |
 | --- | --- |
-#### Related Feature ID
+#### Related Feature IDs
 
-## 9. Release Planning
+## 9. Version Planning
 | Version | Planned Content | Status |
 | --- | --- | --- |
 

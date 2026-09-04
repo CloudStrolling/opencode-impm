@@ -19,8 +19,8 @@
  * Wraps common git operations:
  *   init: git init
  *   status: working tree status
- *   branch: create and switch to a branch
- *   checkout: switch to a branch (creates it when it does not exist)
+ *   branch: create and switch branch
+ *   checkout: switch to a branch (create when it does not exist)
  *   commit: stage everything and commit
  *   merge: switch back to the main branch and squash-merge the development branch
  *   current-branch: current branch name
@@ -30,17 +30,11 @@
 
 import * as git from "../utils/git.js";
 
-/** Tool definition (description) exposed to the plugin registry */
 export const gitHelperDefinition = {
     description:
-        "git operation wrapper: init (initialize repository), status (working tree status), branch (create and switch branch), checkout (switch branch), commit (stage everything and commit), merge (switch back to the main branch and squash-merge a branch), current-branch (current branch), pull (pull), log (commit log). Use for version branch creation, commits, and merges in the workflow.",
+        "git operation wrapper: init (initialize repository), status (working tree status), branch (create and switch branch), checkout (switch branch), commit (stage everything and commit), merge (switch back to the main branch and squash-merge the branch), current-branch (current branch), pull (pull), log (commit log). Use for version branch creation, commits and merges in the workflow.",
 };
 
-/**
- * Execute a git operation action
- * @param args The tool arguments: projectRoot, action, and optional branchName/message
- * @returns { success, output } on success, or { success: false, error }
- */
 export function gitHelperExecute(args: {
     projectRoot: string;
     action: string;
@@ -49,7 +43,7 @@ export function gitHelperExecute(args: {
 }) {
     const root = args.projectRoot;
     const action = args.action;
-    // Wrap a git call and convert any exception into a unified error result
+    /** Safe execution wrapper: catch exceptions and uniformly return the { success, output | error } result structure */
     const safe = <T>(fn: () => T): { success: boolean; output?: T; error?: string } => {
         try {
             return { success: true, output: fn() };
@@ -69,21 +63,21 @@ export function gitHelperExecute(args: {
         case "branch": {
             const branchName = args.branchName?.trim();
             if (!branchName) {
-                return { success: false, error: "Missing required argument branchName (branch name)." };
+                return { success: false, error: "Missing required parameter branchName (branch name)." };
             }
             return safe(() => git.createBranch(root, branchName));
         }
         case "checkout": {
             const branchName = args.branchName?.trim();
             if (!branchName) {
-                return { success: false, error: "Missing required argument branchName (branch name)." };
+                return { success: false, error: "Missing required parameter branchName (branch name)." };
             }
             return safe(() => git.switchBranch(root, branchName));
         }
         case "commit": {
             const message = args.message?.trim();
             if (!message) {
-                return { success: false, error: "Missing required argument message (commit message)." };
+                return { success: false, error: "Missing required parameter message (commit message)." };
             }
             return safe(() => {
                 git.addFiles(root);
@@ -93,11 +87,10 @@ export function gitHelperExecute(args: {
         case "merge": {
             const branchName = args.branchName?.trim();
             if (!branchName) {
-                return { success: false, error: "Missing required argument branchName (the branch to merge)." };
+                return { success: false, error: "Missing required parameter branchName (the name of the branch to merge)." };
             }
             return safe(() => {
                 const outputs: string[] = [];
-                // Try the default main branch names (main/master) before squashing the development branch
                 for (const main of ["main", "master"]) {
                     try {
                         outputs.push(git.switchBranch(root, main));
@@ -119,7 +112,6 @@ export function gitHelperExecute(args: {
         case "log":
             return safe(() => git.getLog(root));
         default:
-            // Unknown action: return a descriptive error instead of throwing
             return {
                 success: false,
                 error: `Unknown action: ${action} (should be init/status/branch/checkout/commit/merge/current-branch/pull/log).`,

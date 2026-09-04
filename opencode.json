@@ -13,5 +13,59 @@
       ],
       "enabled": true
     }
+  },
+  "agent": {
+    "ba": {
+      "model": "opencode-go/glm-5.2",
+      "reasoning_effort": "high"
+    },
+    "bee": {
+      "model": "opencode-go/deepseek-v4-pro",
+      "reasoning_effort": "high"
+    },
+    "cs": {
+      "model": "opencode-go/deepseek-v4-flash",
+      "reasoning_effort": "low"
+    },
+    "dba": {
+      "model": "opencode-go/glm-5.2",
+      "reasoning_effort": "high"
+    },
+    "dw": {
+      "model": "opencode-go/deepseek-v4-flash",
+      "reasoning_effort": "high"
+    },
+    "fee": {
+      "model": "opencode-go/deepseek-v4-flash",
+      "reasoning_effort": "high"
+    },
+    "pm": {
+      "model": "opencode-go/deepseek-v4-flash",
+      "reasoning_effort": "low"
+    },
+    "sa": {
+      "model": "opencode-go/glm-5.2",
+      "reasoning_effort": "max"
+    },
+    "scm": {
+      "model": "opencode-go/deepseek-v4-flash",
+      "reasoning_effort": "low"
+    },
+    "sse": {
+      "model": "opencode-go/deepseek-v4-pro",
+      "reasoning_effort": "max"
+    },
+    "te": {
+      "model": "opencode-go/deepseek-v4-flash",
+      "reasoning_effort": "high"
+    },
+    "tl": {
+      "model": "opencode-go/deepseek-v4-pro",
+      "reasoning_effort": "high"
+    },
+    "ws": {
+      "model": "opencode-go/deepseek-v4-flash",
+      "reasoning_effort": "low"
+    }
   }
 }

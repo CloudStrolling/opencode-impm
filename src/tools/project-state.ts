@@ -17,53 +17,22 @@
 /**
  * impm_project_info / impm_isinit tools
  *
- * - impm_project_info: reads docs/project.md and parses the project basic information.
- * - impm_isinit: checks whether the project has been initialized (project.md / sad.md exist),
- *   and determines whether it is an empty project (no source files other than system directories).
+ * - impm_project_info: reads docs/project.md and parses the project basic info.
+ * - impm_isinit: checks whether the project has been initialized (whether project.md / sad.md
+ *   exist), and determines whether it is an empty project (no source files except system
+ *   directories).
  */
 
 import { existsSync } from "fs";
 import { join } from "path";
-import { listFilesRecursive } from "../utils/paths.js";
+import { EXCLUDED_DIRS, listFilesRecursive } from "../utils/paths.js";
 import { formatProjectInfo, readProjectInfo } from "../utils/project.js";
 
-/** System directories excluded when determining an empty project */
-const EXCLUDED_DIRS = new Set([
-    "node_modules",
-    ".git",
-    "docs",
-    "dist",
-    "build",
-    "coverage",
-    ".opencode",
-    "assets",
-    "deploy",
-    ".idea",
-    ".vscode",
-    "__pycache__",
-    ".venv",
-    "venv",
-    "target",
-    "out",
-    "bin",
-    "obj",
-    ".next",
-    ".nuxt",
-    "vendor",
-    ".cache",
-]);
-
-/** Tool definition (description) exposed to the plugin registry */
 export const projectInfoDefinition = {
     description:
-        "Reads the project basic information: parses the project Chinese name, English name, English abbreviation, programming language, project type, and overall introduction from docs/project.md. Use when obtaining the project abbreviation or determining the initialization mode during the initialization phase.",
+        "Read the project basic info: parse the project Chinese name, English name, English abbreviation, programming language, project type, and overall introduction from docs/project.md. Use for obtaining the project English abbreviation and determining the initialization mode during the initialization phase.",
 };
 
-/**
- * Read and format the project basic information from docs/project.md
- * @param args The tool arguments: projectRoot
- * @returns The parsed project info plus the formatted text on success, or an error result
- */
 export function projectInfoExecute(args: { projectRoot: string }) {
     try {
         const info = readProjectInfo(args.projectRoot);
@@ -80,24 +49,18 @@ export function projectInfoExecute(args: { projectRoot: string }) {
     }
 }
 
-/** Tool definition (description) exposed to the plugin registry */
 export const isInitDefinition = {
     description:
-        "Checks whether the project has been initialized: determines whether docs/project.md and docs/sad.md both exist and are non-empty, and scans the project root to determine whether it is an empty project (no files after excluding system directories such as node_modules, .git, and docs). Use when determining the project type (empty/existing) during the initialization phase.",
+        "Check whether the project has been initialized: determine whether docs/project.md and docs/sad.md both exist and are non-empty, and scan the project root directory to determine whether it is an empty project (no files after excluding system directories such as node_modules, .git, docs). Use for determining the project type (empty/existing) during the initialization phase.",
 };
 
-/**
- * Check whether the project is initialized and whether it is an empty project
- * @param args The tool arguments: projectRoot
- * @returns The initialization state (initialized, emptyProject, sourceFileCount) and a hint
- */
 export function isInitExecute(args: { projectRoot: string }) {
     try {
         const root = args?.projectRoot?.trim();
         if (!root) {
             return {
                 success: false,
-                error: "Missing required argument projectRoot (the absolute path of the project root directory).",
+                error: "Missing required parameter projectRoot (the absolute path of the project root directory).",
             };
         }
         const projectMdPath = join(root, "docs", "project.md");
@@ -106,7 +69,6 @@ export function isInitExecute(args: { projectRoot: string }) {
         const projectMdExists = existsSync(projectMdPath);
         const sadMdExists = existsSync(sadMdPath);
 
-        // Count the files outside the excluded system directories to detect an empty project
         let files: string[] = [];
         try {
             files = listFilesRecursive(root).filter((f) => {
@@ -114,7 +76,7 @@ export function isInitExecute(args: { projectRoot: string }) {
                     return false;
                 }
                 const parts = f.split(/[\\/]/);
-                return !parts.some((p) => EXCLUDED_DIRS.has(p));
+                return !parts.some((p) => EXCLUDED_DIRS.includes(p));
             });
         } catch {
             files = [];
@@ -129,8 +91,8 @@ export function isInitExecute(args: { projectRoot: string }) {
             sourceFileCount: files.length,
             hint:
                 projectMdExists && sadMdExists
-                    ? "The project is already initialized; enter the corresponding workflow phase directly."
-                    : "The project is not initialized; run /impm-init to complete initialization. Empty projects are written with the standard structure, while existing projects are reverse-engineered and completed from the existing code.",
+                    ? "The project has been initialized; directly proceed to the corresponding workflow phase."
+                    : "The project has not been initialized; run /impm-init to complete the initialization. Empty projects are written with the standard structure, existing projects are reverse-engineered and completed based on the existing code.",
         };
     } catch (err) {
         return {

@@ -17,23 +17,24 @@
 /**
  * impm_task_manager tool
  * Task list {abbreviation}-task-v{version}.json management:
- *   - init: validates and writes the task list (taskListJson)
- *   - query: queries tasks (returns a single task when taskId is given, otherwise a list summary)
- *   - next: returns the next executable task (not started and all of whose upstream tasks are completed)
- *   - update: updates a task status (not started | in progress | completed)
+ *   - init: Validate and write task list (taskListJson)
+ *   - query: Query tasks (returns single task when taskId is specified, otherwise returns list summary)
+ *   - next: Return the next executable task (not completed and all upstream tasks are completed)
+ *   - update: Update task status (not started | in progress | completed)
  *
- * Task statuses: not started | in progress | completed (case-insensitive on input, stored lowercase)
+ * Task status: not started | in progress | completed
  */
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
 import { dirname } from "path";
 import { getDocPath } from "../utils/paths.js";
 import { resolveAbbrev } from "../utils/project.js";
+import { withFileLock } from "../utils/file-lock.js";
 
-/** The three allowed task statuses (input is case-insensitive; stored lowercase) */
+/** Valid task status set */
 export const TASK_STATUSES = ["not started", "in progress", "completed"] as const;
 
-/** A single task in the task list (extra fields such as upstreamTaskIds are allowed) */
+/** Task item: id/status are required fields, title, userStoryId, apiId, upstreamTaskIds and other fields are passed through */
 export interface TaskItem {
     id: string;
     title: string;
@@ -41,35 +42,22 @@ export interface TaskItem {
     [key: string]: unknown;
 }
 
-/** Standard path of the task list JSON file of a version */
+/** Task list file path (follows standard document path rules) */
 function taskFilePath(projectRoot: string, abbrev: string, version: string): string {
     return getDocPath(projectRoot, abbrev, version, "task");
 }
 
-/** The task list file content: non-task payload fields plus the tasks array */
 export interface TaskListFile {
     payload: Record<string, unknown>;
     tasks: TaskItem[];
 }
 
-/** Normalize a status input to a lowercase allowed status (invalid values become "not started") */
-function normalizeStatus(status: unknown): string {
-    const s = String(status ?? "").toLowerCase().trim();
-    return TASK_STATUSES.includes(s as (typeof TASK_STATUSES)[number])
-        ? s
-        : "not started";
-}
-
-/**
- * Read and parse the task list file
- * @param file The task list JSON path
- * @returns The payload fields and the tasks array; throws on an invalid format
- */
+/** Read task list: compatible with both plain array and { payload, tasks } storage formats, separating additional info from task array */
 function readTaskList(file: string): TaskListFile {
     const data = JSON.parse(readFileSync(file, "utf8"));
     const tasks = Array.isArray(data) ? data : data?.tasks;
     if (!Array.isArray(tasks)) {
-        throw new Error("Invalid task list format: should be an array of tasks or an object containing a tasks array.");
+        throw new Error("Invalid task list format: should be a task array or an object containing a tasks array.");
     }
     const payload =
         Array.isArray(data) || data === null || typeof data !== "object"
@@ -79,12 +67,7 @@ function readTaskList(file: string): TaskListFile {
     return { payload, tasks: tasks as TaskItem[] };
 }
 
-/**
- * Write the task list back to the file (payload + tasks, pretty-printed JSON)
- * @param file The task list JSON path
- * @param payload The non-task metadata fields
- * @param tasks The tasks to persist
- */
+/** Write back task list: preserve additional info (payload) and serialize task array */
 function writeTaskList(
     file: string,
     payload: Record<string, unknown>,
@@ -97,7 +80,7 @@ function writeTaskList(
     );
 }
 
-/** Whether all upstream tasks of a task are completed (missing upstream ids are ignored) */
+/** Check whether all upstream dependencies of a task are completed (upstream task not existing is treated as completed) */
 function upstreamDone(task: TaskItem, tasks: TaskItem[]): boolean {
     const upstream: unknown[] = (task.upstreamTaskIds ?? []) as unknown[];
     for (const id of upstream) {
@@ -105,41 +88,37 @@ function upstreamDone(task: TaskItem, tasks: TaskItem[]): boolean {
         if (!up) {
             continue;
         }
-        if (normalizeStatus(up.status) !== "completed") {
+        if (up.status !== "completed") {
             return false;
         }
     }
     return true;
 }
 
-/** Build a summary: total count, counts by status, and pending (non-completed) tasks */
+/** Generate task list summary: total, count by status, list of not-started tasks */
 function summaryOf(tasks: TaskItem[]) {
     const byStatus: Record<string, number> = {};
     for (const t of tasks) {
-        const s = normalizeStatus(t.status);
+        const s = TASK_STATUSES.includes(t.status as (typeof TASK_STATUSES)[number])
+            ? t.status
+            : "not started";
         byStatus[s] = (byStatus[s] ?? 0) + 1;
     }
     return {
         total: tasks.length,
         byStatus,
         pending: tasks
-            .filter((t) => normalizeStatus(t.status) !== "completed")
+            .filter((t) => t.status !== "completed")
             .map((t) => ({ id: t.id, title: t.title })),
     };
 }
 
-/** Tool definition (description) exposed to the plugin registry */
 export const taskManagerDefinition = {
     description:
-        "Task list management: action=init validates and writes the task list JSON (taskListJson); action=query queries tasks (returns a single task when taskId is passed, otherwise the list summary and unfinished tasks); action=next returns the next executable task (not started and all of whose upstream tasks are completed); action=update updates a task status (not started/in progress/completed). Use for task scheduling and status tracking.",
+        "Task list management: action=init validates and writes the task list JSON (taskListJson); action=query queries tasks (returns single task when taskId is passed, otherwise returns list summary and not-started tasks); action=next returns the next executable task (not started and all upstream tasks completed); action=update updates task status (not started/in progress/completed). Use for task scheduling and status tracking.",
 };
 
-/**
- * Execute a task list management action (init/query/next/update)
- * @param args The tool arguments: projectRoot, action, and optional taskId/status/taskListJson/version/projectName
- * @returns The action result (task, summary, or message) or { success: false, error }
- */
-export function taskManagerExecute(args: {
+export async function taskManagerExecute(args: {
     projectRoot: string;
     action: "init" | "query" | "next" | "update";
     taskId?: string;
@@ -152,87 +131,97 @@ export function taskManagerExecute(args: {
         const abbrev = resolveAbbrev(args.projectRoot, args.projectName);
         const version = args.version?.trim();
         if (!version) {
-            return { success: false, error: "Missing required argument version (version number)." };
+            return { success: false, error: "Missing required parameter version (version number)." };
         }
         const file = taskFilePath(args.projectRoot, abbrev, version);
         const action = args.action;
 
-        // init: validate the JSON and persist the task list with normalized statuses
         if (action === "init") {
-            const raw = args.taskListJson ?? "";
-            let data: unknown;
-            try {
-                data = JSON.parse(raw);
-            } catch {
-                return {
-                    success: false,
-                    action,
-                    error: "Failed to parse taskListJson; please check the JSON syntax.",
-                };
-            }
-            const tasks = Array.isArray(data) ? data : (data as { tasks?: unknown })?.tasks;
-            if (!Array.isArray(tasks) || tasks.length === 0) {
-                return {
-                    success: false,
-                    action,
-                    error: "The task list is empty or invalid: it must be an array of tasks, or an object containing a non-empty tasks array.",
-                };
-            }
-            // Validate unique ids and normalize every status before writing
-            const seen = new Set<string>();
-            const normalized: TaskItem[] = [];
-            const payload: Record<string, unknown> =
-                data !== null && typeof data === "object" && !Array.isArray(data)
-                    ? { ...data }
-                    : {};
-            delete payload.tasks;
-            if (!payload.projectName) {
-                payload.projectName = abbrev;
-            }
-            payload.version = version;
-            for (const t of tasks as Array<Record<string, unknown>>) {
-                if (!t || typeof t.id !== "string" && typeof t.id !== "number") {
+            // Read-modify-write with locking: prevents concurrent task list initialization from overwriting each other
+            return await withFileLock(file, async () => {
+                // Prevent accidental overwrite: when task list already exists, re-running init to overwrite is not supported, to avoid losing updated task statuses
+                if (existsSync(file)) {
                     return {
                         success: false,
                         action,
-                        error: "A task is missing the id field: every task must contain an id.",
+                        error: `Task list already exists: ${file}. To rebuild, please confirm and handle manually in the version directory first to avoid overwriting updated task statuses.`,
                     };
                 }
-                const id = String(t.id);
-                if (seen.has(id)) {
+                const raw = args.taskListJson ?? "";
+                let data: unknown;
+                try {
+                    data = JSON.parse(raw);
+                } catch {
                     return {
                         success: false,
                         action,
-                        error: `Duplicate task id: ${id}.`,
+                        error: "taskListJson JSON parsing failed, please check JSON syntax.",
                     };
                 }
-                seen.add(id);
-                const status = normalizeStatus(t.status);
-                normalized.push({ ...t, id, status } as TaskItem);
-            }
-            mkdirSync(dirname(file), { recursive: true });
-            writeTaskList(file, payload, normalized);
-            return {
-                success: true,
-                action,
-                path: file,
-                count: normalized.length,
-                message: `Wrote ${normalized.length} tasks.`,
-            };
+                const tasks = Array.isArray(data) ? data : (data as { tasks?: unknown })?.tasks;
+                if (!Array.isArray(tasks) || tasks.length === 0) {
+                    return {
+                        success: false,
+                        action,
+                        error: "Task list is empty or invalid: must be a task array, or an object containing a non-empty tasks array.",
+                    };
+                }
+                const seen = new Set<string>();
+                const normalized: TaskItem[] = [];
+                const payload: Record<string, unknown> =
+                    data !== null && typeof data === "object" && !Array.isArray(data)
+                        ? { ...data }
+                        : {};
+                delete payload.tasks;
+                if (!payload.projectName) {
+                    payload.projectName = abbrev;
+                }
+                payload.version = version;
+                for (const t of tasks as Array<Record<string, unknown>>) {
+                    if (!t || typeof t.id !== "string" && typeof t.id !== "number") {
+                        return {
+                            success: false,
+                            action,
+                            error: "Task missing id field: every task must include an id.",
+                        };
+                    }
+                    const id = String(t.id);
+                    if (seen.has(id)) {
+                        return {
+                            success: false,
+                            action,
+                            error: `Duplicate task id: ${id}.`,
+                        };
+                    }
+                    seen.add(id);
+                    const status = TASK_STATUSES.includes(t.status as (typeof TASK_STATUSES)[number])
+                        ? (t.status as string)
+                        : "not started";
+                    normalized.push({ ...t, id, status } as TaskItem);
+                }
+                mkdirSync(dirname(file), { recursive: true });
+                writeTaskList(file, payload, normalized);
+                return {
+                    success: true,
+                    action,
+                    path: file,
+                    count: normalized.length,
+                    message: `Wrote ${normalized.length} tasks.`,
+                };
+            });
         }
 
         if (!existsSync(file)) {
             return {
                 success: false,
                 action,
-                error: `The task list does not exist: ${file}. Run /impm-task-create to generate the task list first.`,
+                error: `Task list does not exist: ${file}. Please run /impm-task-create first to generate the task list.`,
             };
         }
 
         const list = readTaskList(file);
         const tasks = list.tasks;
 
-        // query: return a single task (taskId) or the list summary with all tasks
         if (action === "query") {
             if (args.taskId) {
                 const task = tasks.find((t) => t.id === args.taskId);
@@ -240,7 +229,7 @@ export function taskManagerExecute(args: {
                     return {
                         success: false,
                         action,
-                        error: `Task does not exist: #${args.taskId}.`,
+                        error: `Task not found: #${args.taskId}.`,
                     };
                 }
                 return { success: true, action, task };
@@ -248,17 +237,17 @@ export function taskManagerExecute(args: {
             return { success: true, action, path: file, ...summaryOf(tasks), tasks };
         }
 
-        // next: pick the first unfinished task whose upstream tasks are all completed
         if (action === "next") {
+            // Exclude "in progress" tasks: prevents the same task from being dispatched to multiple executors during concurrent scheduling
             const candidate = tasks.find(
-                (t) => normalizeStatus(t.status) !== "completed" && upstreamDone(t, tasks),
+                (t) => t.status !== "completed" && t.status !== "in progress" && upstreamDone(t, tasks),
             );
             if (!candidate) {
                 return {
                     success: true,
                     action,
                     task: null,
-                    message: "No executable tasks: all tasks are completed, or the upstream/downstream dependencies of the remaining tasks are not ready.",
+                    message: "No pending tasks: all tasks are completed, or remaining tasks have unfinished upstream dependencies.",
                 };
             }
             return {
@@ -269,36 +258,40 @@ export function taskManagerExecute(args: {
             };
         }
 
-        // update: change a task status and persist the whole list
         if (action === "update") {
-            const taskId = args.taskId;
-            const status = normalizeStatus(args.status);
-            if (!taskId) {
-                return { success: false, action, error: "Missing required argument taskId (task ID)." };
-            }
-            if (!TASK_STATUSES.includes(status as (typeof TASK_STATUSES)[number])) {
+            // Read-modify-write with locking: serialize concurrent task status updates (PM marking in progress / scm marking completed), prevents overwriting each other
+            return await withFileLock(file, async () => {
+                const taskId = args.taskId;
+                const status = args.status?.trim();
+                if (!taskId) {
+                    return { success: false, action, error: "Missing required parameter taskId (task ID)." };
+                }
+                if (!status || !TASK_STATUSES.includes(status as (typeof TASK_STATUSES)[number])) {
+                    return {
+                        success: false,
+                        action,
+                        error: `Invalid status: ${status ?? ""} (should be: not started/in progress/completed).`,
+                    };
+                }
+                const lockedList = readTaskList(file);
+                const lockedTasks = lockedList.tasks;
+                const task = lockedTasks.find((t) => t.id === taskId);
+                if (!task) {
+                    return {
+                        success: false,
+                        action,
+                        error: `Task not found: #${taskId}.`,
+                    };
+                }
+                task.status = status;
+                writeTaskList(file, lockedList.payload, lockedTasks);
                 return {
-                    success: false,
+                    success: true,
                     action,
-                    error: `Invalid status: ${args.status ?? ""} (should be: not started/in progress/completed).`,
+                    task,
+                    message: `Task #${taskId} status updated to "${status}".`,
                 };
-            }
-            const task = tasks.find((t) => t.id === taskId);
-            if (!task) {
-                return {
-                    success: false,
-                    action,
-                    error: `Task does not exist: #${taskId}.`,
-                };
-            }
-            task.status = status;
-            writeTaskList(file, list.payload, tasks);
-            return {
-                success: true,
-                action,
-                task,
-                message: `Task #${taskId} status updated to "${status}".`,
-            };
+            });
         }
 
         return { success: false, error: `Unknown action: ${action} (should be init/query/next/update)` };

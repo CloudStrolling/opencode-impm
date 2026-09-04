@@ -18,21 +18,21 @@
  * opencode-impm plugin entry
  *
  * This is the entry file of the "I am the Project Manager" (AI Project Manager) OpenCode plugin.
- * The plugin registers 14 custom tools: project information, initialization determination, document
- * read/write, template reading, version management, progress management, task management, context
- * building, project analysis, git operations, and the 3 prompt-recorder built-in tools (prompt
- * recording, token backfill, conversation export).
- *
- * Built-in feature: prompt-recorder (prompt recording + conversation export, including a
- * chat.message hook, an event hook, and 3 manual tools: impm_prompt_record,
- * impm_prompt_finalize, impm_prompt_export).
+ * The plugin registers 15 custom tools: project info, initialization check, doc read/write, template
+ * reading, version management, progress management, task scheduling, context building, project
+ * analysis, git operations, plus 3 tools of the built-in prompt-recorder feature (prompt recording,
+ * token backfill, conversation export), and 1 tool of the built-in heartbeat feature (subagent
+ * heartbeat detection and hung restart).
  *
  * Usage:
  * 1. npm package mode: configure "plugin": ["opencode-impm"] in opencode.json
- * 2. Local mode: copy assets to .opencode/ via scripts/install.mjs,
- *    and configure the plugin path in opencode.json.
+ * 2. Local mode: copy assets to .opencode/ via scripts/install.mjs, and configure the
+ *    plugin path in opencode.json.
  */
 
+import { readFileSync, existsSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { projectInfoDefinition, projectInfoExecute, isInitDefinition, isInitExecute } from "./tools/project-state.js";
 import { docReaderDefinition, docReaderExecute } from "./tools/doc-reader.js";
 import { docWriterDefinition, docWriterExecute } from "./tools/doc-writer.js";
@@ -44,19 +44,17 @@ import { contextBuilderDefinition, contextBuilderExecute } from "./tools/context
 import { projectAnalyzerDefinition, projectAnalyzerExecute } from "./tools/project-analyzer.js";
 import { gitHelperDefinition, gitHelperExecute } from "./tools/git-helper.js";
 import { createPromptRecorder } from "./tools/prompt-recorder.js";
+import { createHeartbeatMonitor } from "./tools/heartbeat.js";
 
 /**
- * Create the JSON schema for an OpenCode tool argument
- * @param description The description of the argument
+ * Create the schema for an OpenCode tool string argument
+ * @param description the Chinese description of the argument
  */
 function createStringSchema(description: string) {
     return { type: "string" as const, description };
 }
 
-/**
- * Create the JSON schema for an OpenCode tool string-array argument
- * @param description The description of the argument
- */
+/** Create the schema for an OpenCode tool string array argument (array of strings) */
 function createArraySchema(description: string) {
     return {
         type: "array" as const,
@@ -66,12 +64,11 @@ function createArraySchema(description: string) {
 }
 
 /**
- * Tool result adaptation: the plugin tool bridge layer (tool/registry.ts) of
- * opencode v1.18+ only accepts two result shapes, a string or { output: string },
- * and drops all other fields; returning a plain object causes output=undefined,
- * which triggers a crash in the truncate layer's text.split
- * (Cannot read properties of undefined (reading 'split')).
- * Uniformly serialize object results into an output string.
+ * Tool result adaptation: the plugin tool bridging layer of opencode v1.18+ (tool/registry.ts)
+ * only accepts either a string or { output: string } as the result shape, discarding all other
+ * fields; returning a plain object leads to output=undefined, which in turn triggers a
+ * text.split crash in the truncate layer (Cannot read properties of undefined (reading 'split')).
+ * Consistently serialize object results into an output string.
  */
 function toToolResult(result: unknown): unknown {
     if (typeof result === "string") {
@@ -86,7 +83,7 @@ function toToolResult(result: unknown): unknown {
     return { output: JSON.stringify(result, null, 2) };
 }
 
-/** Wrap a tool definition: convert the execute return value into the shape compatible with the opencode bridge layer */
+/** Wrap a tool definition: convert the execute result into the shape compatible with the opencode bridging layer */
 function wrapToolResult(def: {
     description?: string;
     args?: Record<string, unknown>;
@@ -99,25 +96,128 @@ function wrapToolResult(def: {
     };
 }
 
-/** Runtime context injected by OpenCode when loading the plugin */
+/** Plugin runtime context: the project path and working directory injected by OpenCode */
 interface ToolContext {
     project: { path: string };
     directory: string;
+    /**
+     * OpenCode SDK client (injected by the newer plugin context; may be missing in older versions).
+     * The heartbeat monitor uses it to abort a hung session (client.session.abort) and to inject
+     * a continue-run instruction into the main session (client.session.chat).
+     */
+    client?: {
+        session?: {
+            abort?: (arg: unknown) => Promise<unknown>;
+            chat?: (arg: unknown, body?: unknown) => Promise<unknown>;
+        };
+    };
 }
 
 /**
- * Plugin main function - automatically called by OpenCode when loading the plugin
- * @param context The OpenCode runtime context, containing the project path, workspace, and other information
- * @returns The tool registry, which OpenCode automatically registers for the agents to use
+ * Plugin runtime environment info: the directory where the compiled output is located and the plugin package root directory
+ * dist/index.js is located at {package root}/dist/, so the plugin root directory is one level up.
+ */
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+/** Plugin package root directory (contains assets/, dist/, scripts/, package.json) */
+const PLUGIN_ROOT = join(__dirname, "..");
+
+/** Current plugin version number (read from the plugin package.json) */
+function getPluginVersion(): string {
+    try {
+        const pkg = JSON.parse(
+            readFileSync(join(PLUGIN_ROOT, "package.json"), "utf-8"),
+        ) as { version?: string };
+        return pkg.version || "";
+    } catch {
+        return "";
+    }
+}
+
+/**
+ * Ensure the target project has impm assets installed (agents/commands/skills).
+ *
+ * Version-aware installation: compares the installedVersion in .opencode/impm-manifest.json with the current plugin version.
+ * When they match, skips directly (zero overhead); when they differ (first install / plugin upgrade),
+ * dynamically loads scripts/install-core.mjs's runInstall to re-run the full installation
+ * (clean stale files + copy new + update opencode.json).
+ *
+ * Background: when opencode auto-installs plugins via npm (ignoreScripts:true), postinstall is not executed.
+ * Therefore, this plugin must self-check at entry function startup to ensure assets are always in sync with the plugin version.
+ *
+ * @param projectRoot Target project root directory (assets copied to its .opencode/)
+ */
+async function ensureInstalled(projectRoot: string): Promise<void> {
+    try {
+        const manifestPath = join(projectRoot, ".opencode", "impm-manifest.json");
+        const currentVersion = getPluginVersion();
+
+        // Read the installed version (if manifest is missing or corrupted, treat as first install)
+        let installedVersion = "";
+        if (existsSync(manifestPath)) {
+            try {
+                const m = JSON.parse(
+                    readFileSync(manifestPath, "utf-8"),
+                ) as { installedVersion?: string };
+                installedVersion = m.installedVersion || "";
+            } catch {
+                /* ignore corrupted manifest, treat as first install */
+            }
+        }
+
+        // Version matches -> skip (already installed on first startup or no upgrade)
+        if (installedVersion === currentVersion) {
+            return;
+        }
+
+        // First install or version upgrade -> dynamically load install core logic to execute full installation
+        const corePath = pathToFileURL(join(PLUGIN_ROOT, "scripts", "install-core.mjs")).href;
+        const core = (await import(corePath)) as {
+            runInstall: (opts: {
+                pluginRoot: string;
+                projectRoot: string;
+                version: string;
+                agentType?: string;
+            }) => boolean;
+        };
+        core.runInstall({
+            pluginRoot: PLUGIN_ROOT,
+            projectRoot,
+            version: currentVersion,
+        });
+    } catch (err) {
+        // Installation failure does not block plugin loading: log a warning, the rest of the plugin's functionality remains usable
+        console.warn(
+            `[opencode-impm] Auto-install assets failed (will retry on next startup): ${(err as Error)?.message ?? err}`,
+        );
+    }
+}
+
+/**
+ * Plugin main function — called automatically by OpenCode when loading the plugin
+ * @param context OpenCode runtime context, including the project path, working directory, etc.
+ * @returns returns the tool registry, which OpenCode automatically registers for use by the Agent
  */
 export default async function impmPlugin(context: ToolContext) {
     const projectRoot = context.project?.path || context.directory;
 
-    // Built-in feature: prompt-recorder (prompt recording + conversation export, including hooks and 3 manual tools)
+    // Startup self-check: if version differs, auto-sync assets (first install / plugin upgrade)
+    await ensureInstalled(projectRoot);
+
+    // Built-in feature: prompt-recorder (prompt recording + conversation export, with hooks and 3 manual tools)
     const promptRecorder = await createPromptRecorder(projectRoot);
 
+    // Built-in feature: heartbeat (subagent heartbeat detection and automatic restart, with hooks and 1 manual tool)
+    const heartbeat = await createHeartbeatMonitor(projectRoot, context.client);
+
+    /** Combine multiple event hook handlers: a failure of any one does not affect the others (each hook catches internally) */
+    const combinedEvent = async (input: { event: unknown }): Promise<void> => {
+        await Promise.all([promptRecorder.event(input), heartbeat.event(input)]);
+    };
+
     const tools = {
-            /** Project information tool - parses the project basic information from docs/project.md */
+            /** Project info reading tool — parse the project basic info from docs/project.md */
             impm_project_info: {
                 description: projectInfoDefinition.description,
                 args: {
@@ -130,7 +230,7 @@ export default async function impmPlugin(context: ToolContext) {
                 },
             },
 
-            /** Initialization determination tool - checks whether the project is initialized and whether it is an empty project */
+            /** Initialization check tool — check whether the project has been initialized and whether it is an empty project */
             impm_isinit: {
                 description: isInitDefinition.description,
                 args: {
@@ -143,22 +243,22 @@ export default async function impmPlugin(context: ToolContext) {
                 },
             },
 
-            /** Document read tool - reads various project management documents from the standard paths */
+            /** Doc reading tool — read various project management documents from the standard paths */
             impm_doc_reader: {
                 description: docReaderDefinition.description,
                 args: {
                     projectRoot: createStringSchema("The absolute path of the project root directory"),
                     docType: createStringSchema(
-                        "Doc type: project | sad | urs | prd | dbd | api | lld | testcase | task | sql | review | context | cs | ws | ui-test-record | regression-unit | regression-api | readme | agent | deploy-build | deploy-deploy",
+                        "Doc type: project | sad | urs | prd | dbd | api | lld | testcase | task | sql | review | context | cs | ws | ui-test-record | regression-unit | regression-api | rtm | apifox-openapi | apifox-postman | readme | agent | deploy-build | deploy-deploy",
                     ),
                     projectName: createStringSchema(
-                        "The project abbreviation (optional; inferred automatically from docs/project.md or the version directories when not provided)",
+                        "Project English abbreviation (optional; when not passed, it is inferred automatically from docs/project.md or the version directories)",
                     ),
                     version: createStringSchema(
-                        "The version number (optional; the latest version is used automatically when not provided)",
+                        "Version number (optional; when not passed, the latest version is obtained automatically)",
                     ),
                     taskId: createStringSchema(
-                        "The task ID (required for context/cs/ws documents; for testcase, reads the testcase.md inside the task directory when provided)",
+                        "Task ID (required for the context/cs/ws documents; when passed for testcase, reads the testcase.md inside the task directory)",
                     ),
                     target: createStringSchema(
                         "Read location: version=version directory (default), main=the merged document under the docs root directory",
@@ -176,27 +276,30 @@ export default async function impmPlugin(context: ToolContext) {
                 },
             },
 
-            /** Document write tool - writes document content to the standard paths, automatically creating directories */
+            /** Doc writing tool — write document content to the standard path, automatically creating directories */
             impm_doc_writer: {
                 description: docWriterDefinition.description,
                 args: {
                     projectRoot: createStringSchema("The absolute path of the project root directory"),
                     docType: createStringSchema(
-                        "Doc type: project | sad | urs | prd | dbd | api | lld | testcase | task | sql | review | context | cs | ws | ui-test-record | regression-unit | regression-api | readme | agent | deploy-build | deploy-deploy",
+                        "Doc type: project | sad | urs | prd | dbd | api | lld | testcase | task | sql | review | context | cs | ws | ui-test-record | regression-unit | regression-api | rtm | apifox-openapi | apifox-postman | readme | agent | deploy-build | deploy-deploy",
                     ),
                     projectName: createStringSchema(
-                        "The project abbreviation (optional; inferred automatically from docs/project.md or the version directories when not provided)",
+                        "Project English abbreviation (optional; when not passed, it is inferred automatically from docs/project.md or the version directories)",
                     ),
                     version: createStringSchema(
-                        "The version number (optional; the latest version is used automatically when not provided)",
+                        "Version number (optional; when not passed, the latest version is used automatically)",
                     ),
                     taskId: createStringSchema(
-                        "The task ID (required for context/cs/ws documents; for testcase, writes the testcase.md inside the task directory when provided)",
+                        "Task ID (required for the context/cs/ws documents; when passed for testcase, writes the testcase.md inside the task directory)",
                     ),
                     target: createStringSchema(
                         "Write location: version=version directory (default), main=the merged document under the docs root directory",
                     ),
-                    content: createStringSchema("The document content (Markdown or JSON text)"),
+                    expectedBase: createStringSchema(
+                        "Concurrent conflict detection baseline: the latest full text read before writing (optional). If the file was already modified by another task at write time (current content != expectedBase), the write is rejected and a conflict error is returned; re-read and merge before writing back",
+                    ),
+                    content: createStringSchema("Document content (Markdown or JSON text)"),
                 },
                 async execute(args: Record<string, unknown>) {
                     return docWriterExecute({
@@ -206,18 +309,19 @@ export default async function impmPlugin(context: ToolContext) {
                         version: args.version as string | undefined,
                         taskId: args.taskId as string | undefined,
                         target: args.target as "version" | "main" | undefined,
+                        expectedBase: args.expectedBase as string | undefined,
                         content: args.content as string,
                     });
                 },
             },
 
-            /** Template read tool - reads the standard template content */
+            /** Template reading tool — read the standard template content */
             impm_template_reader: {
                 description: templateReaderDefinition.description,
                 args: {
                     projectRoot: createStringSchema("The absolute path of the project root directory"),
                     templateName: createStringSchema(
-                        "The template name (e.g., PROJECT-TEMPLATE.MD, TASK-TEMPLATE.json; the extension may be omitted)",
+                        "Template name (e.g. PROJECT-TEMPLATE.MD, TASK-TEMPLATE.json; the extension may be omitted)",
                     ),
                 },
                 async execute(args: Record<string, unknown>) {
@@ -228,19 +332,19 @@ export default async function impmPlugin(context: ToolContext) {
                 },
             },
 
-            /** Version management tool - gets the current version, computes the next version, and creates version directories */
+            /** Version management tool — get the current version, compute the next version number, and create the version directory */
             impm_version: {
                 description: versionDefinition.description,
                 args: {
                     projectRoot: createStringSchema("The absolute path of the project root directory"),
                     action: createStringSchema(
-                        "Action: current=get the current latest version, next=compute the next version (patch + 1), init=create a version directory",
+                        "Action: current=get the current latest version number, next=compute the next version number (z value +1), init=create the version directory",
                     ),
                     hintVersion: createStringSchema(
-                        "The hint version (used with priority when the user or the prompt has already specified a version)",
+                        "Hint version number (used with priority when the user or the prompt has already specified a version number)",
                     ),
                     projectName: createStringSchema(
-                        "The project abbreviation (optional; inferred automatically when not provided)",
+                        "Project English abbreviation (optional; when not passed, it is inferred automatically)",
                     ),
                 },
                 async execute(args: Record<string, unknown>) {
@@ -253,55 +357,59 @@ export default async function impmPlugin(context: ToolContext) {
                 },
             },
 
-            /** Version progress management tool - creates/records/queries version_progress.md */
+            /** Version progress management tool — create/record/query version_progress.md */
             impm_progress: {
                 description: progressDefinition.description,
                 args: {
                     projectRoot: createStringSchema("The absolute path of the project root directory"),
                     action: createStringSchema(
-                        "Action: init=create the progress file, add=insert a new row, check=query the step status and overall progress, list=list all records",
+                        "Action: init=create the progress table, add=insert a new row, finalize=settle the duration and tokens of the last row, check=query the step status and overall progress, list=list all records",
                     ),
                     stepName: createStringSchema(
-                        "The step name (skill name, e.g., impm-init-urs; required for add/check)",
+                        "Step name (skill name, e.g. impm-init-urs; required for add/check)",
                     ),
                     status: createStringSchema(
-                        "The step status (e.g., completed, in progress, no database needed, {task ID}-completed; used for add, default completed)",
+                        "Step status (e.g. completed, in progress, no database needed, {task ID}-completed; used for add, default completed)",
                     ),
-                    version: createStringSchema("The version number"),
+                    version: createStringSchema("Version number"),
                     projectName: createStringSchema(
-                        "The project abbreviation (optional; inferred automatically when not provided)",
+                        "Project English abbreviation (optional; when not passed, it is inferred automatically)",
+                    ),
+                    dbPath: createStringSchema(
+                        "The opencode database path (optional; default ~/.local/share/opencode/opencode.db)",
                     ),
                 },
                 async execute(args: Record<string, unknown>) {
                     return progressExecute({
                         projectRoot: (args.projectRoot as string) || projectRoot,
-                        action: args.action as "init" | "add" | "check" | "list",
+                        action: args.action as "init" | "add" | "finalize" | "check" | "list",
                         stepName: args.stepName as string | undefined,
                         status: args.status as string | undefined,
                         version: args.version as string | undefined,
                         projectName: args.projectName as string | undefined,
+                        dbPath: args.dbPath as string | undefined,
                     });
                 },
             },
 
-            /** Task status management tool - initializes/queries/updates the task list */
+            /** Task status management tool — initialize/query/update the task list */
             impm_task_manager: {
                 description: taskManagerDefinition.description,
                 args: {
                     projectRoot: createStringSchema("The absolute path of the project root directory"),
                     projectName: createStringSchema(
-                        "The project abbreviation (optional; inferred automatically when not provided)",
+                        "Project English abbreviation (optional; when not passed, it is inferred automatically)",
                     ),
-                    version: createStringSchema("The version number"),
+                    version: createStringSchema("Version number"),
                     action: createStringSchema(
-                        "Action: init=initialize the task list, query=query tasks, next=get the next executable task, update=update a task status",
+                        "Action: init=initialize the task list, query=query tasks, next=get the next executable task, update=update the task status",
                     ),
-                    taskId: createStringSchema("The task ID (used for query/update)"),
+                    taskId: createStringSchema("Task ID (used for query/update)"),
                     status: createStringSchema(
-                        "The new status (used for update): not started | in progress | completed",
+                        "New status (used for update): not started | in progress | completed",
                     ),
                     taskListJson: createStringSchema(
-                        "The task list JSON string (required for init)",
+                        "Task list JSON string (required for init)",
                     ),
                 },
                 async execute(args: Record<string, unknown>) {
@@ -317,18 +425,18 @@ export default async function impmPlugin(context: ToolContext) {
                 },
             },
 
-            /** Context build tool - collects the document fragments relevant to a coding task */
+            /** Context building tool — collect related document excerpts for a coding task */
             impm_context_builder: {
                 description: contextBuilderDefinition.description,
                 args: {
                     projectRoot: createStringSchema("The absolute path of the project root directory"),
                     projectName: createStringSchema(
-                        "The project abbreviation (optional; inferred automatically when not provided)",
+                        "Project English abbreviation (optional; when not passed, it is inferred automatically)",
                     ),
                     version: createStringSchema(
-                        "The version number (optional; the latest version is used automatically when not provided)",
+                        "Version number (optional; when not passed, the latest version is used automatically)",
                     ),
-                    taskId: createStringSchema("The task ID"),
+                    taskId: createStringSchema("Task ID"),
                 },
                 async execute(args: Record<string, unknown>) {
                     return contextBuilderExecute({
@@ -340,13 +448,13 @@ export default async function impmPlugin(context: ToolContext) {
                 },
             },
 
-            /** Project structure analysis tool - scans the source directories and generates a project map */
+            /** Project structure analysis tool — scan the source code directories and generate the project map */
             impm_project_analyzer: {
                 description: projectAnalyzerDefinition.description,
                 args: {
                     projectRoot: createStringSchema("The absolute path of the project root directory"),
                     sourceDirs: createArraySchema(
-                        "The source code directories to scan (relative to the project root, e.g., src, app; when not provided, scans the top-level directories automatically after excluding system directories)",
+                        "The source code directories to scan (relative to the project root, e.g. src, app; when not passed, the top-level directories are scanned automatically after excluding system directories)",
                     ),
                     excludeDirs: createArraySchema(
                         "Additional directory names to exclude (comma-separated is also accepted)",
@@ -370,16 +478,16 @@ export default async function impmPlugin(context: ToolContext) {
                 },
             },
 
-            /** Git operation tool - wraps common operations such as branch creation/commit/merge/status queries */
+            /** Git operation tool — wraps common operations such as branch creation/commit/merge/status query */
             impm_git: {
                 description: gitHelperDefinition.description,
                 args: {
                     projectRoot: createStringSchema("The absolute path of the project root directory"),
                     action: createStringSchema(
-                        "Action: init=initialize the repository, status=view status, branch=create and switch branch, checkout=switch branch, commit=stage everything and commit, merge=switch back to the main branch and squash-merge, current-branch=current branch, pull=pull, log=commit log",
+                        "Action: init=initialize repository, status=view status, branch=create and switch branch, checkout=switch branch, commit=stage everything and commit, merge=switch back to the main branch and squash-merge, current-branch=current branch, pull=pull, log=commit log",
                     ),
-                    branchName: createStringSchema("The branch name (used for branch/checkout/merge)"),
-                    message: createStringSchema("The commit message (required for commit)"),
+                    branchName: createStringSchema("Branch name (used for branch/checkout/merge)"),
+                    message: createStringSchema("Commit message (required for commit)"),
                 },
                 async execute(args: Record<string, unknown>) {
                     return gitHelperExecute({
@@ -391,21 +499,21 @@ export default async function impmPlugin(context: ToolContext) {
                 },
             },
 
-            /** Prompt recording tool (prompt-recorder built-in feature) - backfills the user prompts */
+            /** Prompt recording tool (built-in prompt-recorder feature) — backfill the user prompts */
             impm_prompt_record: promptRecorder.tool.impm_prompt_record,
-
-            /** Prompt recording tool (prompt-recorder built-in feature) - recomputes the tokens and backfills them */
+            /** Prompt recording tool (built-in prompt-recorder feature) — recompute tokens and backfill */
             impm_prompt_finalize: promptRecorder.tool.impm_prompt_finalize,
-
-            /** Prompt recording tool (prompt-recorder built-in feature) - exports the conversation snapshot */
+            /** Prompt recording tool (built-in prompt-recorder feature) — export the conversation snapshot */
             impm_prompt_export: promptRecorder.tool.impm_prompt_export,
+            /** Heartbeat detection tool (built-in heartbeat feature) — view status/scan immediately/view alerts */
+            impm_heartbeat: heartbeat.tool.impm_heartbeat,
         };
 
     return {
-        /** chat.message hook: automatically records the user prompt to prompts.md */
+        /** chat.message hook: automatically record the user prompt to prompts.md */
         "chat.message": promptRecorder.chatMessage,
-        /** Event hook: automatically backfills the tokens and exports the conversation when the main session turn ends */
-        event: promptRecorder.event,
+        /** Event hook: backfill tokens and export the conversation when the main session round ends; subagent heartbeat detection and hung automatic restart */
+        event: combinedEvent,
         tool: Object.fromEntries(
             Object.entries(tools).map(([id, def]) => [id, wrapToolResult(def)]),
         ),

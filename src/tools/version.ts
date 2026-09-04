@@ -16,9 +16,9 @@
 
 /**
  * impm_version tool
- * Version management: current gets the latest version number, next computes the next version (patch + 1),
- * init creates the version directory docs/{abbreviation}-v{version}.
- * Version directory naming convention: {project abbreviation}-v{x.y.z} (x.y.z is the version number).
+ * Version number management: current gets the current latest version number, next computes the next
+ * version number (z value +1), init creates the version directory docs/{abbreviation}-v{version number}.
+ * Version directory name convention: {project English abbreviation}-v{x.y.z} (x.y.z is the version number).
  */
 
 import { existsSync, mkdirSync } from "fs";
@@ -26,17 +26,12 @@ import { normalizeVersion, scanVersionDirs, versionDir } from "../utils/paths.js
 import { incrementPatch, isValidVersion } from "../utils/version.js";
 import { latestVersion, resolveAbbrev } from "../utils/project.js";
 
-/** Tool definition (description) exposed to the plugin registry */
 export const versionDefinition = {
     description:
-        "Version management: action=current gets the latest version number under docs; action=next increments the patch of the largest version by 1 (hintVersion can be passed to specify a version); action=init creates the version directory docs/{project abbreviation}-v{version} (uses the specified version when hintVersion is passed, otherwise automatically takes the next version). Use when creating a version directory or determining the current version number.",
+        "Version number management: action=current gets the current latest version number under docs; action=next adds +1 to the z value of the largest version number (hintVersion can be passed to specify a version number); action=init creates the version directory docs/{project English abbreviation}-v{version number} (uses the specified version number when hintVersion is passed, otherwise automatically takes the next version number). Use when creating a version directory or determining the current version number.",
 };
 
-/**
- * Pick the version for next/init: the hint version when valid, otherwise the latest version + 1 (0.0.1 when none exists)
- * @param args projectRoot, abbrev, and the optional hint version
- * @returns The version string, or null when the hint version is invalid
- */
+/** Determine the version number: use hintVersion with priority when it is valid, otherwise the latest version patch+1, starting from 0.0.1 when there is no version directory; return null when hintVersion is invalid */
 function pickVersion(args: {
     projectRoot: string;
     abbrev: string;
@@ -57,11 +52,6 @@ function pickVersion(args: {
     return "0.0.1";
 }
 
-/**
- * Execute a version management action (current/next/init)
- * @param args The tool arguments: projectRoot, action, and optional hintVersion/projectName
- * @returns The version information or the created version directory, or an error result
- */
 export function versionExecute(args: {
     projectRoot: string;
     action: "current" | "next" | "init";
@@ -84,8 +74,8 @@ export function versionExecute(args: {
                     : null,
                 versions: listAll(args.projectRoot, abbrev),
                 message: latest
-                    ? `The current latest version is ${latest}.`
-                    : "No version directory found; run /impm-init or /impm-version-create to create a version directory.",
+                    ? `The current latest version number is ${latest}.`
+                    : "No version directory found; please run /impm-init or /impm-version-create to create the version directory.",
             };
         }
 
@@ -99,7 +89,7 @@ export function versionExecute(args: {
                 return {
                     success: false,
                     action,
-                    error: "Invalid hintVersion format (should be x.y.z).",
+                    error: "The hintVersion format is invalid (should be x.y.z).",
                 };
             }
             return {
@@ -108,7 +98,7 @@ export function versionExecute(args: {
                 abbrev,
                 version: next,
                 versionDir: versionDir(args.projectRoot, abbrev, next),
-                message: `The next version is ${next}.`,
+                message: `The next version number is ${next}.`,
             };
         }
 
@@ -122,10 +112,9 @@ export function versionExecute(args: {
                 return {
                     success: false,
                     action,
-                    error: "Invalid hintVersion format (should be x.y.z).",
+                    error: "The hintVersion format is invalid (should be x.y.z).",
                 };
             }
-            // Create the version directory (reuse it when it already exists)
             const dir = versionDir(args.projectRoot, abbrev, version);
             const existed = existsSync(dir);
             if (!existed) {
@@ -153,12 +142,12 @@ export function versionExecute(args: {
     }
 }
 
-/** List all version numbers of the project, sorted descending (latest first) */
+/** List all version numbers in descending order of version (latest first) */
 function listAll(projectRoot: string, abbrev: string): string[] {
     return scanVersionDirs(projectRoot, abbrev).sort(compareDesc);
 }
 
-/** Descending numeric-aware comparison of version strings */
+/** Descending version comparison (number-aware, avoiding string sorting placing 0.10.0 before 0.9.0) */
 function compareDesc(a: string, b: string): number {
     return b.localeCompare(a, undefined, { numeric: true });
 }

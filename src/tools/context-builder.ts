@@ -16,34 +16,42 @@
 
 /**
  * impm_context_builder tool
- * Collects the requirement information relevant to a coding task and builds a compact context:
- *   task information + matching user story (PRD) + project information (project.md) + architecture-related sections (sad.md)
+ * Collects the related requirement information for a coding task and builds a compact context:
+ *   task info + the matching user story (PRD) + project info (project.md) + architecture-related sections (sad.md)
  */
 
 import { existsSync, readFileSync } from "fs";
 import { getDocPath } from "../utils/paths.js";
 import { latestVersion, resolveAbbrev } from "../utils/project.js";
 
-/** Tool definition (description) exposed to the plugin registry */
+/** Escape regular expression special characters for literal matching */
+function escapeRegExp(text: string): string {
+    return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 export const contextBuilderDefinition = {
     description:
-        "Builds the task coding context: summarizes the task information, the matching user story (extracted from the PRD), the project information (project.md), and the architecture-related sections (sad.md) by taskId, and generates a compact context Markdown for the coding phase.",
+        "Build the task coding context: summarize the task info, the matching user story (extracted from the PRD), the project info (project.md) and the architecture-related sections (sad.md) by taskId, and generate a compact context Markdown for the coding phase.",
 };
 
-/** Extract the section matching a user story id from the PRD */
+/** Extract the matching section from the PRD by user story ID */
 function extractUserStory(prdContent: string, userStoryId?: string): string {
     if (!userStoryId) {
-        return "(the task is not associated with a user story userStoryId)";
+        return "（The task is not associated with a user story userStoryId）";
     }
     const lines = prdContent.split(/\r?\n/);
     const idToken = userStoryId.trim().toLowerCase();
+    // Word boundary exact matching: avoid US-1 falsely matching sections like US-10 / US-12
+    const idPattern = new RegExp(
+        `(^|[^a-z0-9])${escapeRegExp(idToken)}([^a-z0-9]|$)`,
+    );
     let start = -1;
     let startLevel = 0;
     for (let i = 0; i < lines.length; i++) {
         const m = /^(#{1,6})\s+(.*)$/.exec(lines[i].trim());
         if (m) {
             const heading = m[2].toLowerCase();
-            if (start < 0 && heading.includes(idToken)) {
+            if (start < 0 && idPattern.test(heading)) {
                 start = i;
                 startLevel = m[1].length;
                 break;
@@ -51,7 +59,7 @@ function extractUserStory(prdContent: string, userStoryId?: string): string {
         }
     }
     if (start < 0) {
-        return `(no user story section found in the PRD: ${userStoryId})`;
+        return `（User story section not found in the PRD: ${userStoryId}）`;
     }
     const block = [lines[start]];
     for (let i = start + 1; i < lines.length; i++) {
@@ -64,9 +72,10 @@ function extractUserStory(prdContent: string, userStoryId?: string): string {
     return block.join("\n").trim();
 }
 
-/** Extract the architecture sections relevant to the task from the SAD */
+/** Extract the architecture sections related to the task from the SAD */
 function extractSadSections(sadContent: string): string {
     const lines = sadContent.split(/\r?\n/);
+    // Only keep the sections whose headings contain architecture-related keywords
     const KEYWORDS = /overview|architecture|module|interface|api|data|technology|directory|structure|flow|process|security|deployment|environment|design|constraint|pattern/i;
     const sections: string[] = [];
     let current: string[] = [];
@@ -95,16 +104,11 @@ function extractSadSections(sadContent: string): string {
     flush();
 
     if (sections.length === 0) {
-        return "(no architecture sections related to the task found in sad.md)";
+        return "（No architecture section related to the task found in sad.md）";
     }
     return sections.join("\n\n");
 }
 
-/**
- * Build the coding context for a task: task info + user story (PRD) + project info (project.md) + SAD sections
- * @param args The tool arguments: projectRoot, taskId, and optional version/projectName
- * @returns { success, context, task, taskType, userStoryId } on success, or { success: false, error }
- */
 export function contextBuilderExecute(args: {
     projectRoot: string;
     taskId: string;
@@ -114,7 +118,7 @@ export function contextBuilderExecute(args: {
     try {
         const taskId = args.taskId?.trim();
         if (!taskId) {
-            return { success: false, error: "Missing required argument taskId (task ID)." };
+            return { success: false, error: "Missing required parameter taskId (task ID)." };
         }
         const abbrev = resolveAbbrev(args.projectRoot, args.projectName);
         let version = args.version?.trim();
@@ -123,17 +127,17 @@ export function contextBuilderExecute(args: {
             if (!version) {
                 return {
                     success: false,
-                    error: `No version directory found (docs/${abbrev}-v{x.y.z}). Please run /impm-init or /impm-version-create to create a version directory first.`,
+                    error: `No version directory found (docs/${abbrev}-v{x.y.z}). Please run /impm-init or /impm-version-create first to create the version directory.`,
                 };
             }
         }
 
-        // 1. Task information
+        // 1. Task info
         const taskFile = getDocPath(args.projectRoot, abbrev, version, "task");
         if (!existsSync(taskFile)) {
             return {
                 success: false,
-                error: `The task list does not exist: ${taskFile}. Run /impm-task-create to generate the task list first.`,
+                error: `Task list does not exist: ${taskFile}. Please run /impm-task-create first to generate the task list.`,
             };
         }
         const taskList = JSON.parse(readFileSync(taskFile, "utf8"));
@@ -147,31 +151,30 @@ export function contextBuilderExecute(args: {
         }
 
         // 2. User story (PRD)
-        let userStory = "(PRD document missing)";
+        let userStory = "（PRD document missing）";
         const prdPath = getDocPath(args.projectRoot, abbrev, version, "prd");
         if (existsSync(prdPath)) {
             userStory = extractUserStory(readFileSync(prdPath, "utf8"), task.userStoryId);
         }
 
-        // 3. Project information (project.md)
-        let projectInfo = "(docs/project.md missing)";
+        // 3. Project info (project.md)
+        let projectInfo = "（docs/project.md missing）";
         const projectPath = getDocPath(args.projectRoot, abbrev, version, "project");
         if (existsSync(projectPath)) {
             projectInfo = readFileSync(projectPath, "utf8");
         }
 
         // 4. Architecture-related sections (sad.md)
-        let sadSections = "(docs/sad.md missing)";
+        let sadSections = "（docs/sad.md missing）";
         const sadPath = getDocPath(args.projectRoot, abbrev, version, "sad");
         if (existsSync(sadPath)) {
             sadSections = extractSadSections(readFileSync(sadPath, "utf8"));
         }
 
-        // Assemble the final compact context document from the four collected sections
         const context = [
             `# Task Context (#${task.id} ${task.title ?? ""})`,
             "",
-            "## 1. Task Information",
+            "## 1. Task Info",
             "",
             "```json",
             JSON.stringify(task, null, 2),
@@ -181,11 +184,11 @@ export function contextBuilderExecute(args: {
             "",
             userStory,
             "",
-            "## 3. Project Information",
+            "## 3. Project Info",
             "",
             projectInfo,
             "",
-            "## 4. System Architecture",
+            "## 4. System Architecture Related",
             "",
             sadSections,
             "",

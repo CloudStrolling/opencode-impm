@@ -4,8 +4,8 @@
 **Date**:
 **Author**: DBA
 
-## 1. Design Goals
-(Describe the goals the database design must achieve: supported business, data volume, consistency requirements, etc.)
+## 1. Design Objectives
+(State the objectives the database design aims to achieve: supported business, data scale, consistency requirements, etc.)
 
 ## 2. Database Selection
 **Database Product**:
@@ -20,11 +20,11 @@
 
 ## 5. Physical Model
 ### 5.1 Table Name (table_name)
-| Field Name | Type | Length | Nullable | Default Value | Primary/Foreign Key | Description |
+| Field | Type | Length | Nullable | Default | Primary/Foreign Key | Description |
 | --- | --- | --- | --- | --- | --- | --- |
 
 ## 6. Index Design
-| Index Name | Table Name | Fields | Type | Description |
+| Index Name | Table | Fields | Type | Description |
 | --- | --- | --- | --- | --- |
 
 ## 7. View / Stored Procedure / Trigger Design
@@ -33,14 +33,14 @@
 ### 7.3 Triggers
 
 ## 8. Data Dictionary
-### Enum Values Summary
+### Enumeration Value Summary
 | Field Path | Value | Description |
 | --- | --- | --- |
 
 ## 9. Backup and Recovery Strategy
 (Backup frequency, method, retention period, recovery drills.)
 
-## 10. Security Policy
+## 10. Security Strategy
 (Account permissions, sensitive data masking, auditing, encryption.)
 
 <!-- SPDX-License-Identifier: Apache-2.0 / Copyright 2026 jenemy8023 <jenemy8023@163.com> -->

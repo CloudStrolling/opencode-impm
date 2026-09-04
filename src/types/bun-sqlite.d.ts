@@ -15,16 +15,17 @@
  */
 
 /**
- * Type declaration of the bun:sqlite module
- * It only exists in the Bun runtime and is not loaded in the Node environment;
- * the declaration lets TypeScript compile the dynamic import of prompt-recorder.
+ * bun:sqlite module type declarations
+ * Only exists in Bun runtime, will not be loaded in Node environment;
+ * Declarations used to allow TypeScript compilation of prompt-recorder's dynamic imports.
  */
 declare module "bun:sqlite" {
-    /** Minimal shape of the bun:sqlite Database used by the plugin (read-only queries) */
     export class Database {
+        /** Open database file (readonly is read-only mode) */
         constructor(path: string, options?: { readonly?: boolean });
-        /** Prepare a SQL statement; all()/get() execute it with the given parameters */
+        /** Pre-compile SQL, returns a statement handle that can be executed with parameters (all queries multiple rows, get queries a single row) */
         prepare(sql: string): { all(...params: unknown[]): unknown[]; get(...params: unknown[]): unknown };
+        /** Close database connection */
         close(): void;
     }
 }

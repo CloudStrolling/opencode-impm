@@ -1,14 +1,16 @@
 {
   "name": "opencode-impm",
-  "version": "0.4.3",
-  "description": "I am the Project Manager (AI Project Manager) OpenCode plugin - an engineered full-lifecycle development suite (agents + commands + skills + tools) implementing the traditional waterfall development process",
+  "version": "0.9.0",
+  "description": "I am the Project Manager (AI Project Manager) OpenCode plugin - an engineered full-lifecycle development suite (agents + commands + skills + tools) implementing the traditional waterfall development process, agile sprints, and hotfix flows",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
+    "prepublishOnly": "npm run build",
     "install:plugin": "node scripts/install.mjs",
+    "uninstall:plugin": "node scripts/uninstall.mjs",
     "postinstall": "node scripts/install.mjs"
   },
   "keywords": [
@@ -24,13 +26,18 @@
   "files": [
     "dist/",
     "assets/",
-    "scripts/install.mjs"
+    "scripts/install.mjs",
+    "scripts/install-core.mjs",
+    "scripts/uninstall.mjs",
+    "scripts/install.ps1",
+    "scripts/uninstall.ps1",
+    "scripts/agent-models.json"
   ],
   "devDependencies": {
     "typescript": "^5.7.0",
     "@types/node": "^22.0.0"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=22.5.0"
   }
 }

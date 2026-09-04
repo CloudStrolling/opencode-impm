@@ -15,31 +15,29 @@
  */
 
 /**
- * Built-in feature of the impm plugin: impm-prompt-recorder
+ * impm plugin built-in feature: impm-prompt-recorder
  *
- * Two capabilities (distributed together with the impm plugin, not as a separate plugin):
- * 1. Automatic user prompt recording: the chat.message hook appends the prompt to the
- *    docs/prompts/prompts.md table immediately when the user asks (session_id, prompt time,
- *    prompt content, input tokens, output tokens, cache read, cache write); when the session
- *    ends (session.idle), the conversation cost of that prompt is aggregated per "prompt
- *    window" (the assistant messages after that prompt and before the next prompt, plus the
- *    sub-sessions created during that period) and backfilled into the last 4 columns.
- * 2. Conversation export: exports the full conversation of the main session and all
- *    sub-sessions (including reasoning and replies) to
- *    docs/prompts/prompt-{YYYYMMDD}-{session_id}.md; the file starts with the cumulative
- *    token usage statistics of the whole session, and is continuously updated after each
- *    prompt and at the end of the session.
+ * Two capabilities (distributed as part of the impm plugin, not a standalone plugin):
+ * 1. Automatic user prompt recording: chat.message hook immediately appends the prompt to the
+ *    docs/prompts/prompts.md table (session_id, prompt time, prompt content,
+ *    input token, output token, cache hit, cache write). When the session ends (session.idle),
+ *    the conversation cost for that prompt is aggregated by "prompt window" (assistant messages
+ *    after the current prompt and before the next prompt + child sessions created during that period)
+ *    and backfills the last 4 columns.
+ * 2. Conversation export: Exports the full conversation (including reasoning and responses) of the
+ *    main session and all child sessions to docs/prompts/prompt-{YYYYMMDD}-{session_id}.md,
+ *    with cumulative token consumption statistics for the entire session recorded at the beginning,
+ *    continuously updated at each prompt/session end.
  *
- * Data sources (hooks + SQLite, without using the opencode SDK):
- * - Prompt content: the chat.message hook (the text parts of output.parts)
- * - Conversation content: reads the message / part tables of the opencode SQLite database directly (data JSON)
- * - Current conversation cost: the data.tokens of assistant messages in the message table (including cache.read/write)
- * - Whole-session cumulative cost: the tokens_* columns of the session table, aggregating the
- *   main session and all descendant sessions recursively by parent_id (the Session type of the
- *   official opencode API does not include token fields)
+ * Data source (hooks + SQLite hybrid, does not use opencode SDK):
+ * - Prompt content: chat.message hook (text parts in output.parts)
+ * - Conversation content: Direct read of opencode SQLite database message / part tables (data JSON)
+ * - Current conversation cost: message table assistant message data.tokens (including cache.read/write)
+ * - Cumulative session cost: session table tokens_* columns, recursively aggregated by parent_id
+ *   for main session and all descendant sessions (opencode official API Session type does not include token fields)
  *
- * Trigger: chat.message (records the prompt and refreshes the export) + event (session.idle
- * backfills/exports), idempotent.
+ * Triggers: chat.message (record and refresh export on prompt) + event (backfill/export on session.idle),
+ * idempotent.
  */
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
@@ -47,19 +45,19 @@ import { join } from "node:path";
 
 /** prompts.md table header */
 const TABLE_HEADER = [
-    "| session_id | Time | Prompt content | Input tokens | Output tokens | Cache read | Cache write |",
+    "| session_id | Prompt Time | Prompt Content | Input Token | Output Token | Cache Read | Cache Write |",
     "| --- | --- | --- | --- | --- | --- | --- |",
 ].join("\n");
 
-/** Prompt window matching tolerance: the maximum allowed deviation between the prompts.md prompt time and the DB message time (5 minutes) */
+/** Prompt window matching tolerance: maximum allowed deviation between prompts.md prompt time and DB message time (5 minutes) */
 const TIME_TOLERANCE_MS = 5 * 60 * 1000;
 
-/** Create a string argument schema (consistent with the style of the suite tools) */
+/** Create a string parameter schema (consistent with suite tool style) */
 function createStringSchema(description: string) {
     return { type: "string" as const, description };
 }
 
-/** Left-pad a number to two digits */
+/** Left-pad number with zeros */
 function pad2(n: number): string {
     return String(n).padStart(2, "0");
 }
@@ -76,13 +74,18 @@ function formatDate(ms: number): string {
     return `${d.getFullYear()}${pad2(d.getMonth() + 1)}${pad2(d.getDate())}`;
 }
 
-/** Escape table characters: | → \|, newlines → <br> */
+/** Escape table characters: | → \|, newline → <br> */
 function escapeCell(text: string): string {
     return String(text).replace(/\|/g, "\\|").replace(/\r?\n/g, "<br>");
 }
 
-/** Compute the database path under the default opencode data directory */
-function defaultDbPath(): string {
+/** Split the table row body (after removing leading/trailing |) into cells; escaped pipes (\|) are not split */
+function splitCells(body: string): string[] {
+    return body.split(/(?<!\\)\|/).map((c) => c.trim());
+}
+
+/** Calculate the database path under the default opencode data directory */
+export function defaultDbPath(): string {
     if (process.env.OPENCODE_DATA) {
         return join(process.env.OPENCODE_DATA, "opencode.db");
     }
@@ -93,7 +96,7 @@ function defaultDbPath(): string {
     return join(home, ".local", "share", "opencode", "opencode.db");
 }
 
-/** Row of the session table (read directly from SQLite) */
+/** Session table row (SQLite direct read) */
 interface SessionRow {
     id: string;
     parent_id: string | null;
@@ -106,7 +109,7 @@ interface SessionRow {
     tokens_cache_write: number | null;
 }
 
-/** Row of the message table (data is a JSON string) */
+/** Message table row (data is a JSON string) */
 interface MessageRow {
     id: string;
     session_id: string;
@@ -114,7 +117,7 @@ interface MessageRow {
     data: string;
 }
 
-/** Row of the part table (data is a JSON string) */
+/** Part table row (data is a JSON string) */
 interface PartRow {
     id: string;
     message_id: string;
@@ -123,7 +126,7 @@ interface PartRow {
     data: string;
 }
 
-/** Token usage statistics (one caliber: output and reasoning are recorded separately and merged in the summary) */
+/** Token consumption statistics (one metric: output and reasoning recorded separately, merged during aggregation) */
 interface TokenTotal {
     input: number;
     output: number;
@@ -133,7 +136,7 @@ interface TokenTotal {
 }
 
 /** Database operation handle (compatible with node:sqlite and bun:sqlite) */
-interface SqliteHandle {
+export interface SqliteHandle {
     db: {
         prepare(sql: string): { all(...params: unknown[]): unknown[]; get(...params: unknown[]): unknown };
         close(): void;
@@ -142,10 +145,10 @@ interface SqliteHandle {
 }
 
 /**
- * Open a read-only database: prefer node:sqlite, fall back to bun:sqlite
- * (compatible with both the Node ≥22.5 and Bun plugin runtimes)
+ * Open read-only database: prefer node:sqlite, fall back to bun:sqlite on failure
+ * (compatible with Node ≥22.5 and Bun plugin runtimes)
  */
-async function openDb(dbPath: string): Promise<SqliteHandle> {
+export async function openDb(dbPath: string): Promise<SqliteHandle> {
     try {
         const { DatabaseSync } = await import("node:sqlite");
         const db = new DatabaseSync(dbPath, { readOnly: true });
@@ -155,7 +158,7 @@ async function openDb(dbPath: string): Promise<SqliteHandle> {
                 try {
                     db.close();
                 } catch {
-                    /* Ignore repeated close */
+                    /* Ignore duplicate close */
                 }
             },
         };
@@ -169,19 +172,19 @@ async function openDb(dbPath: string): Promise<SqliteHandle> {
                     try {
                         db.close();
                     } catch {
-                        /* Ignore repeated close */
+                        /* Ignore duplicate close */
                     }
                 },
             };
         } catch (err2) {
             throw new Error(
-                `Unable to open the opencode database: ${dbPath} (${String(err)} / ${String(err2)})`,
+                `Failed to open opencode database: ${dbPath} (${String(err)} / ${String(err2)})`,
             );
         }
     }
 }
 
-/** Query the main session and all its descendant sessions (recursive by parent_id) */
+/** Query the main session and all descendant sessions (recursively by parent_id) */
 function querySessionTree(db: SqliteHandle["db"], rootId: string): SessionRow[] {
     const rows = db
         .prepare(
@@ -216,30 +219,7 @@ function querySessionTree(db: SqliteHandle["db"], rootId: string): SessionRow[] 
     return result;
 }
 
-/**
- * Aggregate the cumulative tokens of a session and all its descendant sessions
- * (read directly from the SQLite session table, i.e., the "whole-session cost",
- * used for the statistics at the beginning of the export file)
- */
-async function collectSessionTokens(dbPath: string, sessionId: string): Promise<TokenTotal> {
-    const opened = await openDb(dbPath);
-    try {
-        const sessions = querySessionTree(opened.db, sessionId);
-        const total: TokenTotal = { input: 0, output: 0, reasoning: 0, cacheRead: 0, cacheWrite: 0 };
-        for (const r of sessions) {
-            total.input += Number(r.tokens_input) || 0;
-            total.output += Number(r.tokens_output) || 0;
-            total.reasoning += Number(r.tokens_reasoning) || 0;
-            total.cacheRead += Number(r.tokens_cache_read) || 0;
-            total.cacheWrite += Number(r.tokens_cache_write) || 0;
-        }
-        return total;
-    } finally {
-        opened.close();
-    }
-}
-
-/** Parse the existing data rows of prompts.md (skipping the header), returning the raw lines and a 2D array of 7 columns */
+/** Parse existing data rows from prompts.md (skip header), return raw lines and 7-column 2D array */
 function parsePromptRows(text: string): Array<{ raw: string; cols: string[] }> {
     const rows: Array<{ raw: string; cols: string[] }> = [];
     for (const raw of String(text).replace(/^\uFEFF/, "").split(/\r?\n/)) {
@@ -247,12 +227,11 @@ function parsePromptRows(text: string): Array<{ raw: string; cols: string[] }> {
         if (!trimmed.startsWith("|") || !trimmed.endsWith("|")) {
             continue;
         }
-        const parts = trimmed.slice(1, -1).split("|").map((c) => c.trim());
+        const parts = splitCells(trimmed.slice(1, -1));
         if (parts.length < 7 || parts[0] === "session_id") {
             continue;
         }
-        // The prompt content (column 3) may contain escaped \| that gets split; take the 4 token columns
-        // from the right and merge the rest back into the left side
+        // Prompt content (column 3) may contain escaped \| (splitCells preserves them), take 4 token columns from right, merge the rest back to the left
         const left = parts.slice(0, parts.length - 4);
         rows.push({
             raw: trimmed,
@@ -270,7 +249,7 @@ function parsePromptRows(text: string): Array<{ raw: string; cols: string[] }> {
     return rows;
 }
 
-/** Return the prompts.md file path of the project, ensuring the directory exists */
+/** Return the prompts.md file path for the project, and ensure the directory exists */
 function promptsFile(projectRoot: string): string {
     const dir = join(projectRoot, "docs", "prompts");
     mkdirSync(dir, { recursive: true });
@@ -278,8 +257,8 @@ function promptsFile(projectRoot: string): string {
 }
 
 /**
- * Append a prompt row to prompts.md (idempotent: deduplicated by session_id + prompt time)
- * The last 4 columns are first written as "pending" and backfilled by finalizeTokens at the end of the session
+ * Append a prompt record row to prompts.md (idempotent: deduplicated by session_id + prompt time)
+ * The last 4 columns are initially written as "pending", backfilled by finalizeTokens at session end
  */
 function appendPromptRow(projectRoot: string, sessionId: string, timeMs: number, prompt: string): number {
     const text = prompt.trim();
@@ -305,7 +284,7 @@ function appendPromptRow(projectRoot: string, sessionId: string, timeMs: number,
     return 1;
 }
 
-/** Read all messages of a session from SQLite (including parts), sorted by time */
+/** Read all messages (including parts) for a session from SQLite, sorted by time */
 function readSessionMessages(db: SqliteHandle["db"], sessionId: string): Array<{
     id: string;
     sessionId: string;
@@ -327,7 +306,7 @@ function readSessionMessages(db: SqliteHandle["db"], sessionId: string): Array<{
         try {
             data = JSON.parse(p.data);
         } catch {
-            /* Ignore parse failures */
+            /* Ignore parse failure */
         }
         const list = partsByMessage.get(p.message_id) || [];
         list.push({ id: p.id, type: String(data.type || ""), data, timeCreated: p.time_created });
@@ -347,7 +326,7 @@ function readSessionMessages(db: SqliteHandle["db"], sessionId: string): Array<{
         try {
             info = JSON.parse(m.data);
         } catch {
-            /* Ignore parse failures */
+            /* Ignore parse failure */
         }
         result.push({
             id: m.id,
@@ -361,7 +340,7 @@ function readSessionMessages(db: SqliteHandle["db"], sessionId: string): Array<{
     return result;
 }
 
-/** Read all user messages of a session (sorted by time), extracting the text */
+/** Read all user messages for a session (sorted by time), extract text */
 function readUserMessages(db: SqliteHandle["db"], sessionId: string): Array<{ time: number; text: string }> {
     return readSessionMessages(db, sessionId)
         .filter((m) => m.role === "user")
@@ -377,7 +356,7 @@ function readUserMessages(db: SqliteHandle["db"], sessionId: string): Array<{ ti
         .sort((a, b) => a.time - b.time);
 }
 
-/** Read the token statistics of all assistant messages of a session (message.data.tokens, including time) */
+/** Read token statistics for all assistant messages in a session (message.data.tokens, with timestamp) */
 function readAssistantCosts(db: SqliteHandle["db"], sessionId: string): Array<{ time: number; cost: TokenTotal }> {
     const out: Array<{ time: number; cost: TokenTotal }> = [];
     for (const m of readSessionMessages(db, sessionId)) {
@@ -409,7 +388,7 @@ function emptyTotal(): TokenTotal {
     return { input: 0, output: 0, reasoning: 0, cacheRead: 0, cacheWrite: 0 };
 }
 
-/** Add two token statistics together */
+/** Accumulate two token statistics */
 function addTotal(a: TokenTotal, b: TokenTotal): TokenTotal {
     return {
         input: a.input + b.input,
@@ -421,10 +400,9 @@ function addTotal(a: TokenTotal, b: TokenTotal): TokenTotal {
 }
 
 /**
- * Compute the current conversation cost of each prompt by "prompt window":
- * window i = [time of the i-th prompt, time of the (i+1)-th prompt);
- * window cost = the tokens of the main-session assistant messages during that period
- * + the cumulative tokens of the sub-sessions created during that period
+ * Calculate the conversation cost for each prompt by "prompt window":
+ * Window i = [time of prompt i, time of prompt i+1);
+ * Cost in window = main session assistant message tokens in that period + cumulative tokens of child sessions created in that period
  */
 function buildWindowCosts(
     db: SqliteHandle["db"],
@@ -435,7 +413,7 @@ function buildWindowCosts(
         return [];
     }
     const windows = users.map(() => emptyTotal());
-    // Assistant message attribution: not earlier than that prompt and earlier than the next prompt → that window
+    // Assistant message attribution: time not earlier than this prompt, earlier than next prompt → belongs to this window
     for (const a of readAssistantCosts(db, sessionId)) {
         let idx = -1;
         for (let k = 0; k < users.length; k++) {
@@ -447,7 +425,7 @@ function buildWindowCosts(
             windows[idx] = addTotal(windows[idx], a.cost);
         }
     }
-    // Sub-session attribution: by which window its creation time falls into
+    // Child session attribution: by their creation time falling into which window
     const children = querySessionTree(db, sessionId).filter((s) => s.parent_id);
     for (const c of children) {
         let idx = -1;
@@ -468,9 +446,8 @@ function buildWindowCosts(
 }
 
 /**
- * Backfill the "current conversation cost" of each prompt row in prompts.md
- * (prompt window caliber, idempotent)
- * Rows and DB user messages are matched by the nearest time (tolerance TIME_TOLERANCE_MS)
+ * Backfill "conversation cost" for each prompt row in prompts.md (prompt window basis, idempotent)
+ * Rows and DB user messages are matched by closest time (within TIME_TOLERANCE_MS tolerance)
  */
 async function finalizeTokens(
     projectRoot: string,
@@ -488,7 +465,7 @@ async function finalizeTokens(
         if (users.length === 0 || windows.length === 0) {
             return { updated: 0 };
         }
-        // Compute the nearest-row match for each user message (when one user can match multiple rows, take the nearest)
+        // For each user message, compute the closest row match (when one user matches multiple rows, take the closest)
         const lines = String(readFileSync(file, "utf8")).replace(/^\uFEFF/, "").split(/\r?\n/);
         const out: string[] = [];
         let updated = 0;
@@ -498,7 +475,7 @@ async function finalizeTokens(
                 out.push(line);
                 continue;
             }
-            const parts = trimmed.slice(1, -1).split("|").map((c) => c.trim());
+            const parts = splitCells(trimmed.slice(1, -1));
             if (parts.length < 7 || parts[0] === "session_id") {
                 out.push(line);
                 continue;
@@ -528,9 +505,10 @@ async function finalizeTokens(
                 continue;
             }
             const w = windows[bestIdx];
-            const left = parts.slice(0, parts.length - 4).map((s) => s.trim()).join(" | ");
+            // Keep id/time/prompt columns as-is (prompt may contain escaped \|, splitCells ensures they aren't split),
+            // only backfill the last 4 token columns to avoid column misalignment from pipe characters
             out.push(
-                `| ${left} | ${w.input} | ${w.output + w.reasoning} | ${w.cacheRead} | ${w.cacheWrite} |`,
+                `| ${parts[0]} | ${parts[1]} | ${parts[2]} | ${w.input} | ${w.output + w.reasoning} | ${w.cacheRead} | ${w.cacheWrite} |`,
             );
             updated += 1;
         }
@@ -543,7 +521,7 @@ async function finalizeTokens(
     }
 }
 
-/** Render a single message as Markdown lines (including reasoning and replies) */
+/** Render a single message as Markdown lines (including reasoning and response) */
 function renderMessage(msg: {
     role: string;
     timeCreated: number;
@@ -572,7 +550,7 @@ function renderMessage(msg: {
                 break;
             case "reasoning":
                 if (p.data.text && String(p.data.text).trim()) {
-                    lines.push("> **Reasoning**");
+                    lines.push("> **Reasoning Process**");
                     lines.push(">");
                     lines.push(
                         String(p.data.text)
@@ -585,7 +563,7 @@ function renderMessage(msg: {
                 }
                 break;
             case "tool":
-                lines.push(`- Tool call: \`${String(p.data.tool || "unknown")}\` (state: ${String(p.data.state || "unknown")})`);
+                lines.push(`- Tool call: \`${String(p.data.tool || "unknown")}\` (status: ${String(p.data.state || "unknown")})`);
                 break;
             case "subtask":
                 lines.push(`- Dispatched subtask: **${String(p.data.agent || "?")}** — ${String(p.data.description || p.data.prompt || "")}`);
@@ -603,7 +581,7 @@ function renderMessage(msg: {
                 lines.push(`- File patch: ${((p.data.files as string[]) || []).join(", ") || String(p.data.hash || "?")}`);
                 break;
             case "agent":
-                lines.push(`- Subagent: ${String(p.data.name || "")}`);
+                lines.push(`- Sub-agent: ${String(p.data.name || "")}`);
                 break;
             default:
                 break;
@@ -614,10 +592,9 @@ function renderMessage(msg: {
 }
 
 /**
- * Export the conversation snapshot of the main session and all sub-sessions to docs/prompts/
- * The file starts with the cumulative token usage statistics of the whole session
- * (the session table caliber, continuously updated with the export)
- * Data source: direct reads of the SQLite message / part tables (including reasoning and replies)
+ * Export conversation snapshots of the main session and all child sessions to docs/prompts/
+ * File header records cumulative token consumption statistics for the entire session (session table basis, continuously updated during export)
+ * Data source: SQLite message / part table direct read (including reasoning and responses)
  */
 async function exportSession(
     projectRoot: string,
@@ -635,11 +612,11 @@ async function exportSession(
         lines.push(`# Conversation Record${main.title ? `: ${main.title}` : ""}`);
         lines.push("");
         lines.push(`- Main session: ${main.id}`);
-        lines.push(`- Exported at: ${formatTime(Date.now())}`);
-        lines.push(`- Session count: ${sessions.length} (main session + ${sessions.length - 1} sub-sessions)`);
+        lines.push(`- Export time: ${formatTime(Date.now())}`);
+        lines.push(`- Session count: ${sessions.length} (main session + ${sessions.length - 1} child sessions)`);
         lines.push("");
 
-        // Cumulative token usage statistics of the whole session (at the beginning, continuously updated with the export)
+        // Cumulative token consumption statistics for the entire session (at the beginning, continuously updated during export)
         const totals = sessions.map((s) => ({
             id: s.id,
             title: s.title,
@@ -660,12 +637,12 @@ async function exportSession(
             }),
             emptyTotal(),
         );
-        lines.push("## Token Usage");
+        lines.push("## Token Consumption Statistics");
         lines.push("");
-        lines.push("| Session | Input tokens | Output tokens (incl. reasoning) | Reasoning tokens | Cache read | Cache write |");
+        lines.push("| Session | Input Token | Output Token (incl. reasoning) | Reasoning Token | Cache Read | Cache Write |");
         lines.push("| --- | --- | --- | --- | --- | --- |");
         for (const s of totals) {
-            const label = s.isMain ? "Main session" : "Sub-session";
+            const label = s.isMain ? "Main session" : "Child session";
             lines.push(
                 `| ${label} \`${s.id}\`${s.title ? ` (${s.title})` : ""} | ${s.input} | ${s.output + s.reasoning} | ${s.reasoning} | ${s.cacheRead} | ${s.cacheWrite} |`,
             );
@@ -677,7 +654,7 @@ async function exportSession(
         lines.push("## Session Tree");
         lines.push("");
         for (const s of sessions) {
-            lines.push(`- ${s.parent_id ? "Sub-session" : "Main session"} \`${s.id}\`${s.title ? ` (${s.title})` : ""}`);
+            lines.push(`- ${s.parent_id ? "Child session" : "Main session"} \`${s.id}\`${s.title ? ` (${s.title})` : ""}`);
         }
         lines.push("");
         for (const s of sessions) {
@@ -686,7 +663,7 @@ async function exportSession(
             lines.push(`> Created: ${formatTime(s.time_created)}${s.title ? ` | Title: ${s.title}` : ""}`);
             lines.push("");
             if (s.parent_id) {
-                lines.push(`> Sub-session (parent session: ${s.parent_id})`);
+                lines.push(`> Child session (parent: ${s.parent_id})`);
                 lines.push("");
             }
             const messages = readSessionMessages(opened.db, s.id);
@@ -705,15 +682,14 @@ async function exportSession(
 }
 
 /**
- * Create the prompt-recorder feature (chat.message hook + event hook + 3 tools)
- * @param projectRoot the project root directory
+ * Create prompt-recorder feature (chat.message hook + event hook + 3 tools)
+ * @param projectRoot Project root directory
  */
 export async function createPromptRecorder(projectRoot: string) {
-    // Reentrancy guards: busy guards the event hook, exporting guards the export refresh
-    let busy = false;
-    let exporting = false;
+    let busy = false; // Event processing mutex lock: prevents session.idle concurrent re-entry
+    let exporting = false; // Export mutex lock: prevents concurrent export file writes
 
-    /** Refresh the export file (to prevent concurrent writes) */
+    /** Refresh export file (prevents concurrent writes) */
     const refreshExport = async (dbPath: string, sessionId: string): Promise<void> => {
         if (exporting) {
             return;
@@ -729,8 +705,7 @@ export async function createPromptRecorder(projectRoot: string) {
     };
 
     /**
-     * chat.message hook: records the prompt to prompts.md immediately when the user asks,
-     * and refreshes the export file
+     * chat.message hook: immediately record to prompts.md when user asks a question, and refresh the export file
      * input: { sessionID, agent?, model?, messageID? }
      * output: { message: UserMessage, parts: Part[] }
      */
@@ -748,8 +723,7 @@ export async function createPromptRecorder(projectRoot: string) {
             if (!prompt) {
                 return;
             }
-            // Only record main-session prompts: query SQLite to determine whether this session is a
-            // sub-session (when not found, treat it as a main session)
+            // Only record main session prompts: check SQLite to determine if the session is a child session (treat as main session if not found)
             try {
                 const opened = await openDb(defaultDbPath());
                 try {
@@ -763,20 +737,20 @@ export async function createPromptRecorder(projectRoot: string) {
                     opened.close();
                 }
             } catch {
-                /* Still record when the database is unreadable; do not block the main flow */
+                /* Still record when database is unreadable, don't block main flow */
             }
             const recorded = appendPromptRow(projectRoot, sessionID, Date.now(), prompt);
             if (recorded) {
-                console.log(`[impm] prompt-recorder recorded a prompt: ${sessionID} (${prompt.slice(0, 50)}...)`);
+                console.log(`[impm] prompt-recorder recorded prompt: ${sessionID} (${prompt.slice(0, 50)}...)`);
             }
-            // Refresh the export file right after the prompt (token statistics and conversation content follow the updates)
+            // Refresh export file immediately after prompt (token statistics and conversation content update accordingly)
             await refreshExport(defaultDbPath(), sessionID);
         } catch (err) {
-            console.error("[impm] prompt-recorder chat.message processing failed:", String(err));
+            console.error("[impm] prompt-recorder chat.message handling failed:", String(err));
         }
     };
 
-    /** event hook: backfills the tokens and exports the conversation when the main session turn ends */
+    /** Event hook: backfill tokens and export conversation when main session turn ends */
     const event = async (input: { event: unknown }): Promise<void> => {
         const eventData = input?.event as { type?: string; properties?: { sessionID?: string } } | undefined;
         if (!eventData || eventData.type !== "session.idle") {
@@ -788,8 +762,7 @@ export async function createPromptRecorder(projectRoot: string) {
         }
         busy = true;
         try {
-            // Only handle the main session (the root session without a parent); sub-sessions are
-            // exported uniformly by the main session
+            // Only process main sessions (root sessions without parent); child sessions are exported together by the main session
             const opened = await openDb(defaultDbPath());
             let isMain = true;
             try {
@@ -807,11 +780,11 @@ export async function createPromptRecorder(projectRoot: string) {
             const r3 = await refreshExport(defaultDbPath(), sessionId);
             if (r2.updated || r3) {
                 console.log(
-                    `[impm] prompt-recorder main session ${sessionId}: backfilled ${r2.updated} token rows, refreshed the export file`,
+                    `[impm] prompt-recorder main session ${sessionId}: backfilled ${r2.updated} rows of tokens, refreshed export file`,
                 );
             }
         } catch (err) {
-            console.error("[impm] prompt-recorder automatic processing failed:", String(err));
+            console.error("[impm] prompt-recorder auto-processing failed:", String(err));
         } finally {
             busy = false;
         }
@@ -821,21 +794,21 @@ export async function createPromptRecorder(projectRoot: string) {
         chatMessage,
         event,
         tool: {
-            /** Manually backfill the user prompts of the specified session into prompts.md */
+            /** Manually backfill user prompts for a specified session into prompts.md */
             impm_prompt_record: {
                 description:
-                    "Backfills the user prompts of the specified session into the docs/prompts/prompts.md table (idempotent; repeated runs do not produce duplicate rows)",
+                    "Backfill user prompts for a specified session into the docs/prompts/prompts.md table (idempotent, repeated runs do not produce duplicate rows)",
                 args: {
-                    projectRoot: createStringSchema("The absolute path of the project root directory"),
-                    sessionID: createStringSchema("The session ID (required, the main session)"),
+                    projectRoot: createStringSchema("Absolute path of the project root directory"),
+                    sessionID: createStringSchema("Session ID (required, main session)"),
                 },
                 async execute(args: Record<string, unknown>): Promise<string> {
                     const root = (args.projectRoot as string) || projectRoot;
                     const sessionId = String(args.sessionID || "");
                     if (!sessionId) {
-                        return "No sessionID specified";
+                        return "No session ID specified (sessionID), this parameter is required.";
                     }
-                    // Extract the user prompts of the session from the SQLite message/part tables and backfill them
+                    // Extract user prompts from SQLite message/part tables for the session and backfill
                     let recorded = 0;
                     try {
                         const opened = await openDb(defaultDbPath());
@@ -863,40 +836,40 @@ export async function createPromptRecorder(projectRoot: string) {
                     return `Recorded ${recorded} prompts (${root}/docs/prompts/prompts.md)`;
                 },
             },
-            /** Manually recompute the current conversation cost and backfill prompts.md */
+            /** Manually recalculate conversation cost and backfill prompts.md */
             impm_prompt_finalize: {
                 description:
-                    "Recomputes the current conversation token cost of each prompt of the specified session by prompt window (assistant messages after that prompt + sub-sessions), and backfills the input/output/cache columns of prompts.md",
+                    "Recalculate token consumption per prompt for a specified session by prompt window (assistant messages after each prompt + child sessions), backfilling the input/output/cache columns in prompts.md",
                 args: {
-                    projectRoot: createStringSchema("The absolute path of the project root directory"),
-                    sessionID: createStringSchema("The session ID (required, the main session)"),
+                    projectRoot: createStringSchema("Absolute path of the project root directory"),
+                    sessionID: createStringSchema("Session ID (required, main session)"),
                     dbPath: createStringSchema(
-                        "The opencode database path (optional; default ~/.local/share/opencode/opencode.db)",
+                        "opencode database path (optional, default ~/.local/share/opencode/opencode.db)",
                     ),
                 },
                 async execute(args: Record<string, unknown>): Promise<string> {
                     const root = (args.projectRoot as string) || projectRoot;
                     const dbPath = (args.dbPath as string) || defaultDbPath();
                     const result = await finalizeTokens(root, dbPath, String(args.sessionID || ""));
-                    return `Backfilled ${result.updated} token statistic rows (${dbPath})`;
+                    return `Backfilled ${result.updated} rows of token statistics (${dbPath})`;
                 },
             },
-            /** Manually export the conversation snapshot of a session */
+            /** Manually export session conversation snapshot */
             impm_prompt_export: {
                 description:
-                    "Exports the conversation snapshot of the specified session (main session + all sub-sessions, including reasoning and replies) to docs/prompts/prompt-{YYYYMMDD}-{session_id}.md, with the whole-session token usage statistics at the beginning",
+                    "Export a specified session (main session + all child sessions, including reasoning and responses) to docs/prompts/prompt-{YYYYMMDD}-{session_id}.md, with cumulative session token consumption statistics at the beginning",
                 args: {
-                    projectRoot: createStringSchema("The absolute path of the project root directory"),
-                    sessionID: createStringSchema("The session ID (required, the main session)"),
+                    projectRoot: createStringSchema("Absolute path of the project root directory"),
+                    sessionID: createStringSchema("Session ID (required, main session)"),
                     dbPath: createStringSchema(
-                        "The opencode database path (optional; default ~/.local/share/opencode/opencode.db)",
+                        "opencode database path (optional, default ~/.local/share/opencode/opencode.db)",
                     ),
                 },
                 async execute(args: Record<string, unknown>): Promise<string> {
                     const root = (args.projectRoot as string) || projectRoot;
                     const dbPath = (args.dbPath as string) || defaultDbPath();
                     const result = await exportSession(root, dbPath, String(args.sessionID || ""));
-                    return `Exported ${result.exported} sessions -> ${result.file}`;
+                    return `Exported ${result.exported} sessions → ${result.file}`;
                 },
             },
         },

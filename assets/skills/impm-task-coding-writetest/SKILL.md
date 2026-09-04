@@ -7,60 +7,65 @@ description: Writes unit test functions, API test Python scripts, and functional
 
 ## Trigger Words
 - Write tests
-- Automated scripts
+- Automation scripts
 - writetest
 
 ## When to Use
-Use this skill when the coding implementation of the current task is complete and unit tests, API test automated scripts, and functional/UI test records need to be written according to the test cases.
+Use after the current task's coding implementation is complete, when unit tests, API test automation scripts, and functional/UI test records need to be written according to the test cases.
 
-## Executing Agent
-This skill is executed by the TE subagent (subagent_type=te). Load this skill with the Skill tool when executing.
+## Execution Role
+This skill is executed by the Test Engineer (subagent_type=te) subagent, loading this skill with the Skill tool for execution.
 
-## Dispatch Instructions (MUST be followed when the PM/upper-level orchestrator launches this skill)
-1. Launch method: use the task tool to launch a subagent; subagent_type MUST be `te`; the PM or orchestrator must not execute this skill's content on its own.
-2. The task prompt MUST carry the context (indispensable): the absolute path of the project root (projectRoot), the project English abbreviation ({project abbreviation}), the current version ({current version}), the original user input $ARGUMENTS (including the file paths mentioned by the user), and the skill name (impm-task-coding-writetest; require the subagent to load this skill with the Skill tool first before executing), and the task ID (taskId, extracted from $ARGUMENTS; when missing, use impm_task_manager to query the next executable task).
-3. Completion requirement: wait for the subagent to return the completion result, verify the output files and the version_progress.md progress records, and only proceed to the next step when everything is correct.
+## Dispatch Notes (must be followed by the PM/upper-level orchestrator when launching this skill)
+1. Launch method: launch the subagent with the task tool; subagent_type must be `te`; neither the PM nor the orchestrator may execute this skill's content on its own.
+2. The prompt must carry the required context (none may be missing): the absolute path of the project root (projectRoot), the project abbreviation ({Project Abbreviation}), the current version ({Current Version}), the verbatim user input $ARGUMENTS (including any file paths the user mentioned), the skill name (impm-task-coding-writetest, requiring the subagent to load this skill with the Skill tool before executing), and the task ID (taskId, extracted from $ARGUMENTS; when missing, use impm_task_manager to query the next executable task).
+3. Completion requirement: after the subagent returns its completion result, verify the output files and the version_progress.md progress records; only proceed to the next step when everything is correct.
 
-## Key Variables and How to Get Them
-| Variable | Description | How to Get |
-| Chinese project name | The Chinese name of the project | Read from docs/project.md via impm_project_info |
-| English project name | The English name of the project | Read from docs/project.md via impm_project_info |
-| Project abbreviation | The English abbreviation of the project, used to build all document paths | Read from docs/project.md via impm_project_info |
-| Current version | The version number currently being executed | Get via impm_version action=current, or infer from the version directory name |
-| Task ID | The ID of the task currently being executed (e.g., TASK-001) | Passed in by the dispatcher (PM/upper-level skill) |
+## Key Variable Definitions and Values
+| Variable | Description | How to obtain |
+| Project Name (Chinese) | The Chinese name of the project | Read from docs/project.md via impm_project_info |
+| Project Name (English) | The English name of the project | Read from docs/project.md via impm_project_info |
+| Project Abbreviation | The English abbreviation of the project, used to assemble all document paths | Read from docs/project.md via impm_project_info |
+| Current Version | The version number currently being executed | Obtain via impm_version action=current, or infer from the version directory name |
+| Task ID | The task ID currently being executed (e.g., TASK-001) | Passed by the dispatcher (PM/upper-level skill) |
 
 ## Execution Requirements
-1. Follow the steps strictly in the order given in the Execution Steps: no skipping, no out-of-order execution, no parallel execution, no merged execution of any step.
-2. Only perform the operations specified in this skill; do not do work unrelated to the task.
-3. All document paths must be built from {project abbreviation}, {current version}, and {task ID}; never invent file names.
-4. Use impm_* tools to obtain information; never fabricate tool results.
+1. Strictly execute in the content and order of the execution steps: do not skip, reorder, parallelize, or merge any step.
+2. Only perform the operations specified by this skill; do not do work unrelated to the task.
+3. All document paths must be assembled with {Project Abbreviation}, {Current Version}, and {Task ID}; do not fabricate file names.
+4. Use impm_* tools to obtain information; do not fabricate tool results.
 5. Use English throughout.
-6. After each step, verify that the produced files exist and their content is correct.
-7. This skill is part of the coding workflow and can only be dispatched by impm-task-coding or impm-coding; it cannot run standalone without a version number and a task ID.
+6. After each step completes, verify that the output files exist and the content is correct.
+7. This skill is part of the coding workflow; it can only be dispatched by impm-task-coding or impm-coding and cannot run independently without a version number and task ID.
 
 ## Execution Steps
-### Step 1: Receive the version number and task ID
-Receive the current version number and task ID ({task ID}, e.g., TASK-001) passed in by the dispatcher.
+### Step 1: Receive the Version and Task ID
+Receive the current version and task ID ({Task ID}, e.g., TASK-001) passed by the dispatcher.
 
-### Step 2: Read the test cases and write them by type
-Call impm_doc_reader (docType=testcase, taskId={task ID}) to read the current task's test cases, and write them by test type:
-1. Unit tests: write unit test functions in the current development language, following the language's conventions and common test plugins;
-2. API tests: write API test scripts in Python and place them in scripts/API-TEST/{project abbreviation}-api-test-v{current version}.py, with each test script using a unified entry point;
-3. Functional and UI tests: add {project abbreviation}-ui-test-record-v{current version}.md under the version directory docs/{project abbreviation}-v{current version}/ via impm_doc_writer (docType=ui-test-record), and clearly list the steps and records of the functional and UI tests in it.
+### Step 2: Read the Test Cases and Write Them by Type
+Call impm_doc_reader (docType=testcase, taskId={Task ID}) to read the current task's test cases, and write them separately by test type:
+1. Unit tests: write unit test functions directly following the habits and common test plugins of the current development language;
+2. API tests: generate a Postman Collection v2.1 format JSON case file and put it in scripts/API-TEST/{Project Abbreviation}-api-test-v{Current Version}.postman_collection.json. First call impm_template_reader to read the API-TEST-COLLECTION-TEMPLATE.json template to understand its structure (focus: info/variable/item/request/expected), then generate items one by one for this task's API-type test cases:
+   - item.name = API path + case name + case ID;
+   - item.request.method/url/header/body filled in per the case's API and test steps (url.raw uses the `{{base_url}}` placeholder, query is filled as an array, body uses mode=raw when it is JSON);
+   - item.event generates pm.test assertion scripts per the case's expected result (status code, business code, field values), for easy debugging in Apifox;
+   - item.expected fills in structured assertions per the case's expected result (status status code, max_response_time response time limit, headers response header containment, assertions response body assertions: type=json uses path+equals/contains, type=body_contains uses value); this expected field is read and executed by API-TEST-RUNNER.py and must match the actual API expectations.
+   **Version directory write conflict avoidance**: first read the latest content of this JSON file (other parallel tasks may have already written items); on the basis of the latest item array, keep others' items and only append this task's items, then write the whole file back (a wholesale overwrite on this file is fine because the content has been merged); if the file does not exist, create it based on the template; re-read and verify after writing that the item count is correct.
+3. Functional and UI tests: create/update {Project Abbreviation}-ui-test-record-v{Current Version}.md under the version directory docs/{Project Abbreviation}-v{Current Version}/, calling impm_doc_writer (docType=ui-test-record). **Version directory write conflict avoidance**: first read the latest content of that document, append this task's test record paragraph after the latest content, then write back with impm_doc_writer using expectedBase=<the read full text>; if a concurrent conflict error is returned, re-read, merge, and write back; wholesale overwrites based on old snapshots are forbidden.
 
-### Step 3: Back-annotate the test cases
-Based on the completed test functions and scripts, mark the corresponding function locations or script locations in testcase.md (update the testcase.md in the task directory).
+### Step 3: Back-annotate the Test Cases
+Based on the completed test functions and scripts, mark the corresponding function location or script location in testcase.md (update the task directory testcase.md).
 
-### Step 4: Record completion
-Call impm_progress (action=add, stepName=impm-task-coding-writetest, status={task ID}-completed).
+### Step 4: Record Completion
+Call impm_progress (action=add, stepName=impm-task-coding-writetest, status={Task ID}-completed).
 
 ## Deliverables
 - Unit test functions (committed with the source code)
-- The API test script scripts/API-TEST/{project abbreviation}-api-test-v{current version}.py
-- The functional/UI test record document docs/{project abbreviation}-v{current version}/{project abbreviation}-ui-test-record-v{current version}.md
-- testcase.md in the task directory (with test locations back-annotated)
-- The progress records in version_progress.md
+- API test case scripts/API-TEST/{Project Abbreviation}-api-test-v{Current Version}.postman_collection.json (Postman Collection v2.1)
+- The functional/UI test record document docs/{Project Abbreviation}-v{Current Version}/{Project Abbreviation}-ui-test-record-v{Current Version}.md
+- Task directory testcase.md (test locations back-annotated)
+- The progress record in version_progress.md
 
-## Next Steps
-- After this step is complete, the dispatcher (impm-task-coding / impm-coding) continues with the next step according to the process.
+## After Completion
+- After completing all operations of this skill, you must immediately end and return to the dispatcher: the list of output file paths and the progress status of this skill in version_progress.md; you must not continue to subsequent phases or tasks on your own, nor wait for further instructions; subsequent dispatch is the responsibility of the dispatcher (PM).
 <!-- SPDX-License-Identifier: Apache-2.0 / Copyright 2026 jenemy8023 <jenemy8023@163.com> -->

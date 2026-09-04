@@ -5,28 +5,28 @@
 **Test Lead**: TE
 
 ## 1. Test Scope Overview
-| Module | Related Task | Number of Test Cases | Priority Distribution |
+| Belonging Module | Related Task | Number of Cases | Priority Distribution |
 | --- | --- | --- | --- |
 
 ## 2. Test Case Details
-### Module: {module name} - {feature point}
-#### TC-{Test Case ID}: {Test Case Name} ({P0/P1/P2/P3})
-- **Test Case ID**:
-- **Test Case Name**:
-- **Module**:
+### Module: {Module Name} - {Feature Point}
+#### TC-{Case ID}: {Case Name} ({P0/P1/P2/P3})
+- **Case ID**:
+- **Case Name**:
+- **Belonging Module**:
 - **Priority**: P0 / P1 / P2 / P3
-- **Preconditions**:
+- **Prerequisites**:
 - **Test Type**: Unit Test / API Test / Functional Test / UI Test
 - **Related Requirement ID**: FR-xxx / US-xxx
 - **Test Data**:
 - **Test Steps**:
-  1. 
-  2. 
+  1.
+  2.
 - **Expected Results**:
-  1. 
-  2. 
-- **Automated Test Function/Script Location**: (filled in by the impm-task-coding-writetest step)
-- **Test Process and Conclusion**: (recorded by the impm-task-coding-runtest step: pass/fail/failure details)
+  1.
+  2.
+- **Automated Test Function/Script Location**: (annotated by the impm-task-coding-writetest step)
+- **Test Process and Conclusion**: (recorded by the impm-task-coding-runtest step; pass/fail/failure details)
 
 ## 3. Execution Summary
 | Result | Count |

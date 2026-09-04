@@ -13,7 +13,7 @@
       "upstreamTaskIds": [],
       "downstreamTaskIds": [],
       "priority": "P0",
-      "status": "Not Started",
+      "status": "not started",
       "testMethod": "",
       "acceptanceCriteria": ""
     }
