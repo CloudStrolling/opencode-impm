@@ -44,7 +44,7 @@ Call impm_template_reader(projectRoot, TASK-TEMPLATE.json) to read the task list
 
 ### Step 2: collect the task basis
 Read the existing documents via impm_doc_reader:
-1. docs/{project English abbreviation}-v0.0.1/{project English abbreviation}-prd-v0.0.1.md (or the master document docs/{project English abbreviation}-prd.md), extract the user story numbers (US-xxx) and their story descriptions;
+1. docs/{project English abbreviation}-v0.0.1/{project English abbreviation}-prd-v0.0.1.md (or the master document docs/{project English abbreviation}-prd.md), extract the user story numbers (US-xxx; IDs are globally unique across the project, e.g. US-v0.0.1-001) and their story descriptions;
 2. docs/{project English abbreviation}-v0.0.1/{project English abbreviation}-lld-v0.0.1.md (or the master document docs/{project English abbreviation}-lld.md);
 3. The System Architecture Design document docs/sad.md;
 4. The API design document docs/{project English abbreviation}-api.md (read it when it exists, extract the interface numbers API-xxx and feature descriptions; skip it when it does not exist).
@@ -53,7 +53,7 @@ Combine the project code and documents to determine the task list; if the docume
 ### Step 3: generate the task list
 Based on the basis collected in step 2, generate the task list according to the TASK-TEMPLATE.json format, containing the fields: projectName, version, and the tasks array. Each task includes: id, title, description, taskType (backend|frontend|common), userStoryId, apiId, upstreamTaskIds, downstreamTaskIds, priority, status ("not started" | "in progress" | "completed"), testMethod, acceptanceCriteria.
 Field mapping rules:
-- userStoryId: fill in the PRD user story number that this task implements (e.g., US-001), obtained from the PRD read in step 2;
+- userStoryId: fill in the PRD user story number that this task implements (e.g., US-v0.0.1-001; IDs are globally unique across the project and include the version number), obtained from the PRD read in step 2;
 - apiId: fill in the API interface number that this task involves/implements (e.g., API-001), obtained from the API document read in step 2; when a task involves multiple interfaces, separate them with commas (e.g., API-001,API-002); leave an empty string when the task does not involve interfaces or the project has no API document.
 Tasks must be ordered by upstream/downstream dependency: tasks being depended on come first, and tasks that depend on others come later, ensuring the coding phase can execute them serially in order.
 - Existing project: reverse-engineer the task list from the existing features and code.

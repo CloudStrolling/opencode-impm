@@ -43,7 +43,7 @@ import { withFileLock } from "../utils/file-lock.js";
 
 export const docWriterDefinition = {
     description:
-        "Write project management documents: write the content to the documents under docs by the standard path (project, sad, urs, prd, dbd, api, lld, testcase, task, sql, review, context, cs, ws, ui-test-record, regression-unit, regression-api, regression, rtm, apifox-openapi, apifox-postman, etc.), automatically creating the directory. When docType is task, validate the JSON validity. Optional expectedBase=the latest full text read before writing, used for concurrent conflict detection (when the file has been modified by another task, reject the write and return a conflict error, avoiding overwriting others' content).",
+        "Write project management documents: write the content to the documents under docs by the standard path (project, sad, urs, prd, dbd, api, lld, testcase, task, sql, review, context, cs, ws, ui-test-record, regression-unit, regression-api, regression, rtm, apifox-openapi, apifox-postman, openapi, swagger, etc.), automatically creating the directory. When docType is task, validate the JSON validity. Optional expectedBase=the latest full text read before writing, used for concurrent conflict detection (when the file has been modified by another task, reject the write and return a conflict error, avoiding overwriting others' content).",
 };
 
 export async function docWriterExecute(args: {

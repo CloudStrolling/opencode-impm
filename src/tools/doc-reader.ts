@@ -21,7 +21,7 @@
  * docType values:
  *   project | sad | urs | prd | dbd | api | lld | testcase | task | sql | review
  *   context | cs | ws | ui-test-record | regression-unit | regression-api | regression | rtm
- *   apifox-openapi | apifox-postman
+ *   apifox-openapi | apifox-postman | openapi | swagger
  *   readme | agent | deploy-build | deploy-deploy
  *
  * taskId must be provided when docType is context/cs/ws;
@@ -40,7 +40,7 @@ import {
 
 export const docReaderDefinition = {
     description:
-        "Read project management documents: read the documents under docs by the standard path (project, sad, urs, prd, dbd, api, lld, testcase, task, sql, review, context, cs, ws, ui-test-record, regression-unit, regression-api, regression, rtm, apifox-openapi, apifox-postman, etc.). When reading the task list (task), return the task summary and the full content.",
+        "Read project management documents: read the documents under docs by the standard path (project, sad, urs, prd, dbd, api, lld, testcase, task, sql, review, context, cs, ws, ui-test-record, regression-unit, regression-api, regression, rtm, apifox-openapi, apifox-postman, openapi, swagger, etc.). When reading the task list (task), return the task summary and the full content.",
 };
 
 /** Parse the task list JSON and return a summary: total count, count by status, list of unfinished tasks; return null when parsing fails */

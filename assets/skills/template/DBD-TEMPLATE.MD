@@ -19,7 +19,14 @@
 (Describe entities, attributes, and relationships without involving specific storage implementation.)
 
 ## 5. Physical Model
-### 5.1 Table Name (table_name)
+
+> **Table Naming Convention**: `{subsystem_abbreviation}_{module_abbreviation}_{entity_name}`, e.g. `sys_user`, `biz_order`, `pay_transaction`.
+> Subsystem and module abbreviations are derived from the SAD module breakdown; entity name is the English abbreviation of the business object.
+
+### 5.1 {Subsystem Abbreviation} — {Subsystem Name}
+#### 5.1.1 {Module Abbreviation} — {Module Name}
+
+**{subsystem_abbreviation}_{module_abbreviation}_{entity_name}**
 | Field | Type | Length | Nullable | Default | Primary/Foreign Key | Description |
 | --- | --- | --- | --- | --- | --- | --- |
 
@@ -42,5 +49,20 @@
 
 ## 10. Security Strategy
 (Account permissions, sensitive data masking, auditing, encryption.)
+
+## 11. Data Initialization
+(Describe preset data: enumeration dictionaries, configuration items, initial data, etc., including corresponding INSERT INTO statements.)
+
+### 11.1 Enumeration Dictionary Initialization
+| Table | Field | Initial Value | Description |
+| --- | --- | --- | --- |
+
+### 11.2 Business Data Initialization
+| Table | Initialization Data Description | SQL Statement |
+| --- | --- | --- |
+
+### 11.3 System Configuration Initialization
+| Table | Configuration Item | Configuration Value | Description |
+| --- | --- | --- | --- |
 
 <!-- SPDX-License-Identifier: Apache-2.0 / Copyright 2026 jenemy8023 <jenemy8023@163.com> -->

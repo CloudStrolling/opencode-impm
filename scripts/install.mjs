@@ -152,6 +152,9 @@ function main() {
         projectRoot: targetRoot,
         version,
         agentType,
+        // Global install: place assets directly into the opencode global config directory (~/.config/opencode),
+        // consistent with the directory scope of install.ps1 / uninstall.mjs --global
+        opencodeDirOverride: isGlobal ? targetRoot : "",
     });
 }
 

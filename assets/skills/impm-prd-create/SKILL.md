@@ -46,6 +46,7 @@ Call impm_template_reader to read the template PRD-TEMPLATE.MD to clarify the se
 
 ### Step 3: Generate the Product Requirement Document
 Based on the requirement bases collected in step 2, generate the Product Requirement Document following the template format. Template sections include: product background, target users, feature list, detailed feature description, business flow diagrams, page prototypes, data requirements, acceptance criteria, version planning, appendices (glossary, reference documents). The feature descriptions must be specific, acceptable, and traceable, and remain consistent with the URS.
+Numbering rule: Feature IDs (F) and User Story IDs (US) are globally unique across the project, formatted as `prefix-v{current version}-sequence` (e.g. F-v0.0.1-001, US-v0.0.1-001). Sequence numbers increment sequentially from 001 within this version; when carrying forward existing features/user stories from previous versions, retain their historical IDs, and only newly added or modified ones are assigned new IDs for this version.
 
 ### Step 4: Write the version document
 Call impm_doc_writer (docType=prd, target=version) to write the Product Requirement Document to docs/{project abbreviation}-v{current version}/{project abbreviation}-prd-v{current version}.md.

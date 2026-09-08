@@ -13,10 +13,12 @@
 | User Role | Use Scenario | Core Need |
 | --- | --- | --- |
 
+> Numbering rule: Feature IDs and User Story IDs are globally unique across the project, formatted as `prefix-v{version}-sequence`, e.g. F-v0.0.1-001, US-v0.0.1-001. Sequence numbers increment sequentially from 001 within each version; features/user stories that remain unchanged across versions retain their original IDs, and only newly added or modified ones are assigned new IDs.
+
 ## 3. Feature List
 | Feature ID | Feature Name | Belonging Module | Priority | Version Scope |
 | --- | --- | --- | --- | --- |
-| F-001 |  |  |  |  |
+| F-v0.0.1-001 |  |  |  |  |
 
 ## 4. Detailed Feature Description
 ### 4.1 Feature Name
@@ -34,7 +36,7 @@
 (Overall acceptance criteria for this version, echoing the user story acceptance criteria.)
 
 ## 8. User Stories
-### US-001: Story Title
+### US-v0.0.1-001: Story Title
 #### Story Description
 As a (role), I want (feature), so that (value).
 #### Prerequisites

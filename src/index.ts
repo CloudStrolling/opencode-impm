@@ -249,7 +249,7 @@ export default async function impmPlugin(context: ToolContext) {
                 args: {
                     projectRoot: createStringSchema("The absolute path of the project root directory"),
                     docType: createStringSchema(
-                        "Doc type: project | sad | urs | prd | dbd | api | lld | testcase | task | sql | review | context | cs | ws | ui-test-record | regression-unit | regression-api | rtm | apifox-openapi | apifox-postman | readme | agent | deploy-build | deploy-deploy",
+                        "Doc type: project | sad | urs | prd | dbd | api | lld | testcase | task | sql | review | context | cs | ws | ui-test-record | regression-unit | regression-api | regression | rtm | apifox-openapi | apifox-postman | openapi | swagger | readme | agent | deploy-build | deploy-deploy",
                     ),
                     projectName: createStringSchema(
                         "Project English abbreviation (optional; when not passed, it is inferred automatically from docs/project.md or the version directories)",
@@ -282,7 +282,7 @@ export default async function impmPlugin(context: ToolContext) {
                 args: {
                     projectRoot: createStringSchema("The absolute path of the project root directory"),
                     docType: createStringSchema(
-                        "Doc type: project | sad | urs | prd | dbd | api | lld | testcase | task | sql | review | context | cs | ws | ui-test-record | regression-unit | regression-api | rtm | apifox-openapi | apifox-postman | readme | agent | deploy-build | deploy-deploy",
+                        "Doc type: project | sad | urs | prd | dbd | api | lld | testcase | task | sql | review | context | cs | ws | ui-test-record | regression-unit | regression-api | regression | rtm | apifox-openapi | apifox-postman | openapi | swagger | readme | agent | deploy-build | deploy-deploy",
                     ),
                     projectName: createStringSchema(
                         "Project English abbreviation (optional; when not passed, it is inferred automatically from docs/project.md or the version directories)",

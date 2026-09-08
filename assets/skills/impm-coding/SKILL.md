@@ -58,7 +58,7 @@ When multiple tasks code in parallel, tasks write content to the version directo
 | {Project Abbreviation}-dbd-v{Current Version}.md / .sql | dbd sub-step | Multiple tasks overwrite concurrently | Same as above: read the latest first, merge this task's table/field/index changes onto the latest content (append SQL by newly added objects, do not rewrite objects others have created), write back with expectedBase, retry on conflict, re-read to verify |
 | {Project Abbreviation}-api-v{Current Version}.md | api sub-step | Multiple tasks overwrite concurrently | Same as above: read the latest first, merge this task's API definitions, write back with expectedBase, retry on conflict, re-read to verify |
 | {Project Abbreviation}-ui-test-record-v{Current Version}.md | writetest sub-step | Multiple tasks overwrite concurrently | Same as above: read the latest first, append this task's test record paragraph after the latest content, write back with expectedBase, retry on conflict |
-| scripts/API-TEST/{Project Abbreviation}-api-test-v{Current Version}.py | writetest sub-step | Multiple tasks overwrite concurrently | Same as above: read the latest script first, keep others' test functions and entries, only add this task's test functions and register their entries, write back with expectedBase, retry on conflict |
+| {Project Abbreviation}-api-test-v{Current Version}.postman_collection.json (in the version directory docs/{Project Abbreviation}-v{Current Version}/) | writetest sub-step | Multiple tasks overwrite concurrently | Same as above: read the latest collection JSON first, keep others' items, only add this task's API test items, write back with expectedBase, retry on conflict |
 | {Project Abbreviation}-task-v{Current Version}.json | PM (marks "in progress"), scm (marks "completed") | Concurrent updates overwrite each other | Task status is exclusively updated only by the PM and scm; sub-step subagents never update it; commits are serialized; the tool-layer file write lock ensures concurrent updates are not lost |
 | git working tree | impm_git commit | Concurrent commits may mix in files of other tasks | gitcommit is forcibly serial: only one scm commit at a time; commit the next one only after the previous is completed and confirmed; before committing, use impm_git (action=status) to verify the working tree changes contain only files of this task and completed tasks; if files of other in-progress tasks are mixed in, hold off the commit and report to the PM |
 
@@ -121,13 +121,13 @@ When impm_task_manager (action=query) shows that all tasks have status "complete
 Call impm_progress (action=add, projectName={Project Name (English)}, version={Current Version}, stepName=impm-coding, status=completed) to record the completion of the coding development phase in version_progress.md; then call impm_progress (action=finalize, projectName={Project Name (English)}, version={Current Version}) before exiting to settle the total duration and tokens of the last row in the progress table (impm-coding, completed), including the consumption of the main session and subagent sub-sessions of this step.
 
 ### Step 6: Report the Completion of the Coding Phase
-Report the completion of the coding phase to the user: the current version, total tasks and completed count, a summary of each task's execution result, the final merge status of the shared documents in the version directory (whether testcase/dbd/api/ui-test-record/api-test scripts had conflicts and how they were resolved), the git commit records ({Project Abbreviation}-v{Current Version}-{Task ID}), and recommend proceeding to the testing phase next.
+Report the completion of the coding phase to the user: the current version, total tasks and completed count, a summary of each task's execution result, the final merge status of the shared documents in the version directory (whether testcase/dbd/api/ui-test-record/api-test cases had conflicts and how they were resolved), the git commit records ({Project Abbreviation}-v{Current Version}-{Task ID}), and recommend proceeding to the testing phase next.
 
 ## Deliverables
 - Two new progress records (in progress/completed) for impm-coding added to version_progress.md
 - All tasks in docs/{Project Abbreviation}-v{Current Version}/{Project Abbreviation}-task-v{Current Version}.json have status "completed"
 - All coding artifacts under each task directory docs/{Project Abbreviation}-v{Current Version}/task_{Task ID}/
-- The concurrent merge results of the shared documents in the version directory (testcase/dbd/api/ui-test-record/api-test scripts)
+- The concurrent merge results of the shared documents in the version directory (testcase/dbd/api/ui-test-record/api-test cases)
 - The git commit records ({Project Abbreviation}-v{Current Version}-{Task ID})
 
 ## After Completion

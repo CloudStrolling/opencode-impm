@@ -53,7 +53,7 @@ This skill is executed (orchestrated) by the Project Manager (main control Agent
 ## Execution Steps
 ### Step 1: Execute regression testing
 1. Check docs/{Project Abbreviation}-v{Current Version Number}/version_progress.md and confirm the status of the impm-regression-test step. If the status is already "completed", skip this step and go directly to Step 2; otherwise:
-2. Start the TE subagent, load the impm-regression-test skill via the Skill tool, and have the TE complete: merge the task test cases into the master test case, run all unit tests in full, run all API test scripts under the scripts/API-TEST/ directory, and write the regression test results respectively.
+2. Start the TE subagent, load the impm-regression-test skill via the Skill tool, and have the TE complete: merge the task test cases into the master test case, run all unit tests in full, run all interface test cases under the current version directory docs/{Project Abbreviation}-v{Current Version Number}/ (Postman Collection v2.1, executed via scripts/API-TEST/run_api_test.py), and write the regression test results respectively.
 3. After the TE finishes, re-check that the impm-regression-test step status has been recorded as "completed" in version_progress.md before continuing to the next step.
 
 ### Step 2: Execute code comments

@@ -9,7 +9,7 @@ description: Determines whether the project needs a database, and completes the 
 database design, DBD, database scripts, SQL, impm-dbd-create
 
 ## When to use
-Use when the system architecture design update is complete (after impm-sad-update). Check whether the master database design document docs/{project abbreviation}-dbd.md exists: if it does not exist, the current project needs no database, skip this step; if it exists, complete the Database Design Document and SQL scripts for the current version following the DBD template based on the SAD and the current version PRD, and record this step in the version progress file.
+Use when the system architecture design update is complete (after impm-sad-update). Check whether the master database design document docs/{project abbreviation}-dbd.md exists: if it does not exist, the current project needs no database, skip this step; if it exists, determine whether there are substantial database changes based on the SAD and the current version PRD: if no changes, skip DBD generation; if changes exist, complete the Database Design Document and SQL scripts for the current version following the DBD template, and record this step in the version progress file.
 
 ## Execution role
 This skill is executed by the Database Architect (subagent_type=dba) subagent, who loads this skill with the Skill tool.
@@ -49,19 +49,25 @@ Call impm_doc_reader to read:
 2. The current version PRD document docs/{project abbreviation}-v{current version}/{project abbreviation}-prd-v{current version}.md;
 3. The existing database design document docs/{project abbreviation}-dbd.md (may be empty, used as a reference).
 
+### Step 3.5: Determine whether the current version has substantial database changes
+Based on the SAD and current version PRD read in step 3, determine whether the current version introduces **substantial database changes**, including but not limited to: new tables, modifications to existing table structures (adding/modifying/deleting columns), new indexes, data initialization requirements, etc.
+
+- **No substantial changes needed** (e.g., the current version only involves frontend interaction adjustments, business logic optimization, pure API layer changes, etc. that do not involve database schema changes): call impm_progress (action=add, stepName=impm-dbd-create, status=no database changes needed, skip DBD generation) to record progress, then end this skill without generating DBD documents or SQL scripts.
+- **Substantial changes needed**: continue to step 4.
+
 ### Step 4: Complete the current version database design
-Based on the SAD and the current version PRD, reference the existing database design docs/{project abbreviation}-dbd.md (may be empty), and apply the DBD template format to complete the current version database design. Call impm_doc_writer (docType=dbd, target=version) to write docs/{project abbreviation}-v{current version}/{project abbreviation}-dbd-v{current version}.md.
+Based on the SAD and the current version PRD, reference the existing database design docs/{project abbreviation}-dbd.md (may be empty), and apply the DBD template format to complete the current version database design. The physical model should be organized by **subsystem → business module** grouping, with table names following the `{subsystem_abbreviation}_{module_abbreviation}_{entity_name}` naming convention. Call impm_doc_writer (docType=dbd, target=version) to write docs/{project abbreviation}-v{current version}/{project abbreviation}-dbd-v{current version}.md.
 
 ### Step 5: Complete the database scripts
-Based on the database design in step 4, complete the corresponding database scripts (database creation, table creation, indexes, initialization data, etc.). Call impm_doc_writer (docType=sql, target=version) to write docs/{project abbreviation}-v{current version}/{project abbreviation}-dbd-v{current version}.sql.
+Based on the database design in step 4, complete the corresponding database scripts (database creation, table creation, indexes, initialization data, etc.). SQL scripts should be organized by **subsystem → business module** grouping, with each statement annotated with its subsystem and module; the end should include data initialization statements (INSERT INTO) corresponding to the Chapter 11 data initialization content in the DBD document. Call impm_doc_writer (docType=sql, target=version) to write docs/{project abbreviation}-v{current version}/{project abbreviation}-dbd-v{current version}.sql.
 
 ### Step 6: Record progress
 Call impm_progress (action=add, stepName=impm-dbd-create, status=completed) to insert a new row at the first position of the table in the version progress file docs/{project abbreviation}-v{current version}/version_progress.md.
 Verify the output files exist and their content is correct, and the progress row is recorded.
 
 ## Deliverables
-- docs/{project abbreviation}-v{current version}/{project abbreviation}-dbd-v{current version}.md (Database Design Document)
-- docs/{project abbreviation}-v{current version}/{project abbreviation}-dbd-v{current version}.sql (database scripts)
+- docs/{project abbreviation}-v{current version}/{project abbreviation}-dbd-v{current version}.md (Database Design Document, grouped by subsystem/business module)
+- docs/{project abbreviation}-v{current version}/{project abbreviation}-dbd-v{current version}.sql (database scripts, including data initialization statements)
 
 ## After completion
 - To proceed to the next step, input /impm-api-create

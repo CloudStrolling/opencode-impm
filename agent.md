@@ -84,7 +84,7 @@ PM → BA / SA / TL / DBA / TE / SCM / DW / CS / WS / FEE / BEE / SSE
 
 **File:** `assets/agents/tl.md`
 
-**Skills executed:** `impm-init-lld`, `impm-init-task`, `impm-api-create`, `impm-lld-create`, `impm-task-create`, `impm-rtm-create`, `impm-task-coding-context`, `impm-task-coding-api`, `impm-coding-review`, `impm-cpc-level3`, `impm-regression-metrics`
+**Skills executed:** `impm-init-lld`, `impm-init-task`, `impm-api-create`, `impm-lld-create`, `impm-task-create`, `impm-rtm-create`, `impm-task-coding-context`, `impm-task-coding-api`, `impm-coding-review`, `impm-tools-cpc-level3`, `impm-regression-metrics`
 
 **Responsibilities:**
 - Writes the API Design Document and the Low-Level Design Document (LLD, focusing on the overall business logic design; interface details are the responsibility of the API document)
@@ -125,7 +125,7 @@ PM → BA / SA / TL / DBA / TE / SCM / DW / CS / WS / FEE / BEE / SSE
 **Responsibilities:**
 - Writes test cases by template (normal paths, boundary conditions, exception paths)
 - Writes unit test functions and automated test scripts
-- Writes API test scripts in Python (scripts/API-TEST/, unified entry point)
+- Generates Postman Collection v2.1 API test cases (version directory `docs/{abbreviation}-v{version}/{abbreviation}-api-test-v{version}.postman_collection.json`), executed via the unified entry `scripts/API-TEST/run_api_test.py`
 - Executes tests and updates test results, rolling back the coding on failure; before running API interface tests, detects and confirms an available python environment in the order "shell python → conda → uv" (reports the missing python to the dispatcher when none is available)
 - Runs regression tests (full unit tests + all API test scripts), backfills the test cases (TC) into the RTM by their related requirements/user stories and checks the coverage, and outputs the Phase-1 quality metrics (`regression.md`) and the regression reports
 
@@ -136,7 +136,7 @@ PM → BA / SA / TL / DBA / TE / SCM / DW / CS / WS / FEE / BEE / SSE
 4. Tests pass → proceed to the next step
 
 **Inputs:** context.md, cs.md, ws.md, test templates, coded code
-**Outputs:** `task_{id}/testcase.md`, unit tests, `scripts/API-TEST/{abbreviation}-api-test-v{version}.py`, `{abbreviation}-ui-test-record-v{version}.md`, `regression.md` (Phase 1), regression test reports
+**Outputs:** `task_{id}/testcase.md`, unit tests, `docs/{abbreviation}-v{version}/{abbreviation}-api-test-v{version}.postman_collection.json`, `{abbreviation}-ui-test-record-v{version}.md`, `regression.md` (Phase 1), regression test reports
 
 ---
 

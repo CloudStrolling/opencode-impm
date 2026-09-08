@@ -5,13 +5,13 @@
 **I am the Project Manager — an AI-driven, engineering-grade full-lifecycle development suite**
 
 <p>
-  <a href="#"><img src="https://img.shields.io/badge/version-0.9.0-2ea44f?style=flat-square" alt="version"></a>
+  <a href="#"><img src="https://img.shields.io/badge/version-1.0.0-2ea44f?style=flat-square" alt="version"></a>
   <a href="./LICENSE"><img src="https://img.shields.io/badge/license-Apache%202.0-blue?style=flat-square" alt="license"></a>
   <a href="https://nodejs.org/"><img src="https://img.shields.io/badge/node->=%2022.5-339933?style=flat-square&logo=node.js&logoColor=white" alt="node"></a>
   <a href="https://opencode.ai/"><img src="https://img.shields.io/badge/OpenCode-Required-ff6b6b?style=flat-square" alt="opencode"></a>
 </p>
 
-<p><i>Built on the OpenCode platform with the "AI Project Manager" at its core, it orchestrates 13 professional Agents through a waterfall-style four-phase workflow to complete the entire software development lifecycle.</i></p>
+<p><i>Built on the OpenCode platform with the "AI Project Manager" at its core, and following CMMI5 specification requirements, it orchestrates 13 professional Agents through a waterfall-style four-phase workflow to complete the entire software development lifecycle, delivering fully tested code, complete documentation support, and reliable process management.</i></p>
 
 [🚀 Quick Start](#-quick-start) · [📖 Usage Documentation](#-usage-documentation) · [📂 Project Structure](#-project-structure) · [❓ FAQ](#-faq)
 
@@ -44,12 +44,12 @@
 | Feature | Description |
 |:---:|:---|
 | 🎭 | **AI Project Manager Orchestration** — uniformly dispatches 13 professional Agents: BA / SA / TL / DBA / TE / SCM / DW / CS / WS / FEE / BEE / SSE |
-| 📋 | **4 Phases, 62 Skills + Independent Compliance Check** — every phase runs strictly in order: no skipping, no out-of-order execution; during the coding phase tasks run concurrently by upstream/downstream dependency (up to 5 in parallel), and Git commits are serialized |
+| 📋 | **4 Phases, 63 Skills + Independent Compliance Toolset + Document Review Mechanism** — every phase runs strictly in order: no skipping, no out-of-order execution; during the coding phase tasks run concurrently by upstream/downstream dependency (up to 5 in parallel), and Git commits are serialized |
 | ⚡ | **Two Lightweight Flows** — agile sprint `/impm-sprint` and hotfix `/impm-hotfix`, drastically fewer steps and lower token consumption while keeping reasonable documentation traces |
 | 🧪 | **Test-Driven Development (TDD)** — test cases are written before coding, tests are executed after coding, and code is committed only when everything passes |
 | 📁 | **Version-Based Management** — each version gets its own directory `docs/{project abbreviation}-v{version}/` plus a dedicated Git branch |
 | 📝 | **All-English Workflow** — documents, comments, and reports are all written in English |
-| 🔌 | **14 Plugin Tools** — document read/write, version management, task scheduling, Git operations, prompt recording and export, etc. |
+| 🔌 | **15 Plugin Tools** — document read/write, version management, task scheduling, Git operations, prompt recording and export, etc. |
 
 ---
 
@@ -89,21 +89,27 @@
 In OpenCode, enter:
 
 ```bash
+# Standard workflow
 /impm
+
+# Document review edition
+/impm-review-edition
 ```
 
 The PM Agent automatically guides you through all four phases of development.
 
 > ⚡ **Lightweight flows**: use `/impm-sprint` (agile sprint, 6 steps) for small-batch iterative requirements; use `/impm-hotfix` (hotfix, 3 steps) for production bugs. Both have fewer steps, lower token consumption, and are faster, while keeping a requirements brief / fix record for review.
 >
-> 📝 **Document review edition**: use `/impm-review-edition` when you want each design document (URS/PRD/SAD/DBD/API/LLD/task list) to be reviewed and confirmed by you as it is generated — the requirements-analysis phase then runs `/impm-docs-review`.
+> 📝 **Document review edition**: use `/impm-review-edition` when you want each design document (URS/PRD/SAD/DBD/API/LLD/task list) to be reviewed and confirmed by you as it is generated — the initialization phase then runs `/impm-init-review` and the requirements-analysis phase runs `/impm-docs-review`.
 
 ### Manual Execution Per Phase
 
 | Phase | Command | Description |
 |:----:|:-----|:-----|
 | 1 | `/impm-init` | Initialize the project; generate URS/PRD/SAD/DBD/API/LLD/task list/test cases |
+| 1 | `/impm-init-review` | Review edition of initialization: after each document step, show a summary then pop up a prompt box for user review |
 | 2 | `/impm-docs` | Confirm the version requirements; update the design documents; create the task list and the requirements traceability matrix |
+| 2 | `/impm-docs-review` | Review edition of the requirements-analysis phase: after each document step, show a summary then pop up a prompt box for user review |
 | 3 | `/impm-coding` | Loop through tasks: context → coding → tests → commit |
 | 4 | `/impm-finish` | Regression testing (with quality metrics), code review, document merging, merge the main branch |
 | ⚡ | `/impm-sprint` | Agile sprint: requirements brief → version & tasks → coding → tests → summary & archive → commit & merge |
@@ -121,7 +127,19 @@ The PM Agent automatically guides you through all four phases of development.
 - [OpenCode](https://opencode.ai/) (a version that supports plugins, skills, and commands)
 - [Python](https://www.python.org/) 3.8+ (**interface tests depend on the python environment** — used to run the API test runner and scripts under `scripts/API-TEST/`; it can be provided by any of the system python, a conda environment, or a uv-managed environment, and the runtime auto-detects it in the order "shell python → conda → uv")
 
-### Method 1: Local Installation (⭐ Recommended for development/debugging)
+### Method 1: OpenCode Auto-Install (⭐ Recommended)
+
+Add the following to `opencode.json`:
+
+```1c
+"plugin": [
+    "opencode-impm"
+  ]
+```
+
+If the `opencode.json` is in a project, this installs for that project. If the `opencode.json` is the global one, this installs globally.
+
+### Method 2: Local Installation
 
 ```bash
 # Clone the project
@@ -140,13 +158,13 @@ node scripts/install.mjs --target /path/to/project
 # .\scripts\install.ps1 -Target D:\path\to\project
 ```
 
-### Method 2: Install as an npm Dependency
+### Method 3: Install as an npm Dependency
 
 ```bash
 npm install opencode-impm
 ```
 
-### Method 3: Global Install (available in every project)
+### Method 4: Global Install (available in every project)
 
 ```bash
 node scripts/install.mjs --global
@@ -200,8 +218,8 @@ The install generates the following structure automatically in the target projec
 project root/
 ├── .opencode/
 │   ├── agents/              # 13 AI Agent definitions
-│   ├── commands/            # 56 command definitions
-│   ├── skills/              # 56 skills and 20 templates
+│   ├── commands/            # 63 command definitions
+│   ├── skills/              # 63 skills and 26 templates
 │   └── plugins/impm/        # compiled plugin entry
 └── opencode.json            # OpenCode configuration file
 ```
@@ -240,7 +258,9 @@ flowchart LR
 | Phase | Command | Core Actions |
 |:----:|:-----|:---------|
 | **1** | `/impm-init` | Determine the project type → create the version directory and progress table → generate all initial documents → commit |
+| **1** | `/impm-init-review` | Document review edition of initialization: same as `/impm-init`, plus project/urs/prd/sad/dbd/api/lld/task/testcase each step shows a summary then pops up a prompt box for user review |
 | **2** | `/impm-docs` | Confirm the version requirements → create the version branch → generate/update URS/PRD/SAD/DBD/API/LLD → create the task list and the requirements traceability matrix → commit |
+| **2** | `/impm-docs-review` | Document review edition of requirements analysis: same as `/impm-docs`, plus urs/prd/sad/dbd/api/lld/task each step shows a summary then pops up a prompt box for user review |
 | **3** | `/impm-coding` | Dispatch tasks by wave (up to 5 tasks in parallel, dependent on previously completed upstream): collect context → code search → web search → database/API design → test cases → coding → write tests → run tests → serialize commits |
 | **4** | `/impm-finish` | Full regression tests (with Phase-1 quality metrics) → add comments → code review → backfill the review quality metrics → update the project map → merge documents → update README/Agent/deployment docs → merge the main branch |
 | **⚡Sprint** | `/impm-sprint` | Requirements brief (one document replacing URS/PRD) → version & tasks (requirements embedded in task descriptions) → coding (skipping context/cs/ws/testcase) → tests → summary & archive → commit & merge |
@@ -265,8 +285,8 @@ flowchart LR
 | Requirement traceability matrix (RTM) | `docs/{abbreviation}-v{version}/{abbreviation}-rtm-v{version}.md` (generated by `/impm-rtm-create`; master doc `docs/{abbreviation}-rtm.md` after merge) |
 | Version progress table | `docs/{abbreviation}-v{version}/version_progress.md` |
 | Version quality metrics report | `docs/{abbreviation}-v{version}/regression.md` (Phase-1 test metrics from `/impm-regression-test` + Phase-2 review metrics from `/impm-regression-metrics`) |
-| Classified-protection level-3 check report | `docs/{abbreviation}-cpc-level3-check.md` (generated by `/impm-cpc-level3`) |
-| API test cases (Postman Collection v2.1) | `scripts/API-TEST/{abbreviation}-api-test-v{version}.postman_collection.json` |
+| Classified-protection level-3 check report | `docs/{abbreviation}-cpc-level3-check.md` (generated by `/impm-tools-cpc-level3`) |
+| API test cases (Postman Collection v2.1) | `docs/{abbreviation}-v{version}/{abbreviation}-api-test-v{version}.postman_collection.json` |
 | API test runner | `scripts/API-TEST/run_api_test.py` (copied from the `API-TEST-RUNNER.py` template in `assets/skills/template/`) |
 | API test report | `scripts/API-TEST/report/api-test-report.md`, `api-test-report.json` |
 | API test runtime | python 3.8+ (auto-detected in the order "shell python → conda → uv" before running API tests; prompts to install python when none is available) |
@@ -276,20 +296,21 @@ flowchart LR
 ### Complete Command List
 
 <details>
-<summary>📋 Click to expand the 56 commands (grouped by phase)</summary>
+<summary>📋 Click to expand the 63 commands (grouped by phase)</summary>
 
 #### Master Workflow
 
 | Command | Description |
 |:-----|:-----|
 | `/impm` | I am the Project Manager: orchestrate the full four-phase workflow |
-| `/impm-review-edition` | Document review edition: fully consistent with `/impm`, except that Phase 2 runs `/impm-docs-review` (every design document is reviewed and confirmed by the user before proceeding) |
+| `/impm-review-edition` | Document review edition: fully consistent with `/impm`, except that the initialization phase runs `impm-init-review` and the requirements-analysis phase runs `/impm-docs-review` (each document step shows a summary, then pops up a prompt box for user review confirmation) |
 
 #### Phase 1: Initialization
 
 | Command | Description | Executing Agent |
 |:-----|:-----|:----------:|
 | `/impm-init` | Orchestrate all steps of the initialization phase | PM |
+| `/impm-init-review` | Document review edition of the initialization phase: after each document step, show a summary then pop up a prompt box for user review | PM |
 | `/impm-init-isinit` | Determine whether the project is initialized and whether it is an empty project | PM |
 | `/impm-init-git` | Initialize the git repository and create the first commit | SCM |
 | `/impm-init-project` | Generate the project basic information `docs/project.md` | SA |
@@ -372,7 +393,13 @@ flowchart LR
 
 | Command | Description | Executing Agent |
 |:-----|:-----|:----------:|
-| `/impm-cpc-level3` | Classified-protection level-3 code review: check item by item against the GB/T 22239-2019 checklist and output `docs/{abbreviation}-cpc-level3-check.md` | TL |
+| `/impm-tools-cpc-level3` | Classified-protection level-3 code review: check item by item against the GB/T 22239-2019 checklist and output `docs/{abbreviation}-cpc-level3-check.md` | TL |
+| `/impm-tools-personal-info` | Personal information protection compliance check: verify collection / transmission / storage compliance item by item per the Personal Information Protection Law and output `docs/{abbreviation}-personal-info-check.md` | TL |
+| `/impm-tools-encrypt-check` | Cryptographic algorithm compliance check: verify SM2/SM3/SM4 (national cryptography) usage and residual weak algorithms (MD5/DES/SHA-1 etc.), output `docs/{abbreviation}-encrypt-check.md` | TL |
+| `/impm-tools-license-check` | Open-source license compliance check: detect dependency license types and Copyleft (GPL/AGPL) viral conflict, output a check report | TL |
+| `/impm-tools-secrets-scanning` | Sensitive information / secret leak detection: scan hardcoded keys, tokens, passwords, private keys, AK/SK, intranet IPs, output a detection report | TL |
+| `/impm-tools-vulnscan` | Vulnerability scan: query known vulnerabilities in middleware and third-party packages via the OSV.dev API, generate a vulnerability scan report | TL |
+| `/impm-tools-operate-log` | Operation audit log check: verify audit-log instrumentation for critical operations (login, permission changes, data export etc.), output a check report | TL |
 
 </details>
 
@@ -384,10 +411,10 @@ flowchart LR
 opencode-impm/
 ├── 📁 assets/                   # Suite assets (copied to .opencode/ on install)
 │   ├── 📁 agents/               # 13 AI Agent definitions (.md)
-│   ├── 📁 commands/             # 56 commands (.md)
-│   └── 📁 skills/               # 56 skills (one directory per skill) + template/ 20 templates
+│   ├── 📁 commands/             # 63 commands (.md)
+│   └── 📁 skills/               # 63 skills (one directory per skill) + template/ 26 templates
 ├── 📁 src/                      # Plugin source (TypeScript)
-│   ├── 📁 tools/                # Implementation of the tools (including prompt-recorder)
+│   ├── 📁 tools/                # Implementation of the tools (including prompt-recorder, heartbeat)
 │   ├── 📁 utils/                # Path / version / git / file-lock / project info utilities
 │   └── 📄 index.ts              # Plugin entry point
 ├── 📁 scripts/
@@ -513,6 +540,7 @@ You may obtain a copy of the License at
 | Step | Skill | Sub-Agent |
 |:---------|:-------|:------:|
 | Whether the project is already initialized | `impm-init-isinit` | PM |
+| Initialization with per-document user review (document review edition) | `impm-init-review` | PM |
 | Git initialization | `impm-init-git` | SCM |
 | Project information file initialization | `impm-init-project` | SA |
 | Version initialization | `impm-init-version` | SA |
@@ -622,7 +650,13 @@ You may obtain a copy of the License at
 
 | Step | Skill | Sub-Agent |
 |:---------|:-------|:------:|
-| Classified-protection level-3 code review (GB/T 22239-2019 item-by-item check + check report) | `impm-cpc-level3` | TL |
+| Classified-protection level-3 code review (GB/T 22239-2019 item-by-item check + check report) | `impm-tools-cpc-level3` | TL |
+| Cryptographic algorithm compliance check (verify SM2/SM3/SM4 usage and residual weak algorithms MD5/DES/SHA-1, output a check report) | `impm-tools-encrypt-check` | TL |
+| Personal information protection compliance check (verify collection / transmission / storage per the Personal Information Protection Law) | `impm-tools-personal-info` | TL |
+| Open-source license compliance check (detect license types and Copyleft viral conflict) | `impm-tools-license-check` | TL |
+| Sensitive information / secret leak detection (scan hardcoded keys, tokens, passwords, private keys, AK/SK, intranet IPs) | `impm-tools-secrets-scanning` | TL |
+| Vulnerability scan (query known vulnerabilities of middleware and third-party packages via OSV.dev) | `impm-tools-vulnscan` | TL |
+| Operation audit log check (verify audit-log instrumentation for critical operations) | `impm-tools-operate-log` | TL |
 
 </details>
 

@@ -16,15 +16,17 @@
 ### 3.1 Scenario Name
 (Describe the trigger conditions, participating roles, and operating process of the business scenario.)
 
+> Numbering rule: Requirement IDs are globally unique across the project, formatted as `prefix-v{version}-sequence`, e.g. FR-v0.0.1-001, NFR-v0.0.1-001. Sequence numbers increment sequentially from 001 within each version; requirements that remain unchanged across versions retain their original IDs, and only newly added or modified ones are assigned new IDs.
+
 ## 4. Functional Requirements (High-level)
 | Requirement ID | Requirement Name | Requirement Description | Priority |
 | --- | --- | --- | --- |
-| FR-001 |  |  |  |
+| FR-v0.0.1-001 |  |  |  |
 
 ## 5. Non-functional Requirements (High-level)
 | ID | Category | Requirement Description | Metric |
 | --- | --- | --- | --- |
-| NFR-001 | Performance |  |  |
+| NFR-v0.0.1-001 | Performance |  |  |
 
 ## 6. Constraints
 (Technology, business, regulatory, time, and other constraints.)

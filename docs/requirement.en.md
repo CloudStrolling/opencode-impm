@@ -1,6 +1,6 @@
 # Project Overview
 **Chinese Name: 我是项目经理 (I am the Project Manager)**
-**English Name: opencode-impm-cn**
+**English Name: opencode-impm**
 **Abbreviation: impm**
 **Description: An opencode plugin that implements the traditional waterfall development process, including the complete documentation workflow, detailed development design, and testing process.**
 **Core Requirement: The project must strictly follow the core workflow.**
@@ -15,6 +15,13 @@
 | API | API Design Document | 接口设计文档 | API list, API versioning strategy, authentication and authorization mechanisms, common error code definitions, detailed interface definitions (URL/Method/Header/Body/Response), status code mapping, rate limiting strategy, example code |
 | LLD | Low-Level Design Document | 详细设计文档 | Detailed design of the overall business logic: module overview, module division and responsibilities, class diagrams (Mermaid), core business process sequence diagrams (Mermaid), state diagrams, core business logic pseudocode/flowcharts, business rules and constraints, business data flows, data structure definitions, exception handling strategy, logging conventions, performance optimization points, unit test strategy (interface details are the responsibility of the API Design Document and are not repeated in the LLD) |
 | TestCase | Test Case Document | 测试用例 | Test case ID, test case name, module, priority, preconditions, test steps, expected results, test data, related requirement ID, test type (functional/API/performance/security) |
+
+# Global-Unique Requirement Numbering Rule
+The functional requirements (FR) and non-functional requirements (NFR) in the URS, as well as the feature numbers (F) and user story numbers (US) in the PRD, must be **globally unique across all versions of the entire project** — they must not be numbered only within a single version. The numbering format is uniformly "prefix-vVersion-sequential", for example: FR-v0.0.1-001, NFR-v0.0.1-001, F-v0.0.1-001, US-v0.0.1-001.
+- The sequential number increments from 001 within the version where it is first assigned;
+- Requirements / features / user stories that remain unchanged across versions keep their historical number and are not renumbered; only newly added or changed requirements take on a new number within the new version;
+- Other numbers (TASK-xxx, TC-xxx, RTM-xxx) only need to be unique within a version and are not affected by this rule.
+- If new categories such as extended functional requirements (EFR) appear later, they all use the same format "EFR-vVersion-sequential".
 
 # Project Organization Structure
 The project's skills, commands, and agents should first be placed under the assets directory.
@@ -90,7 +97,8 @@ Based on the current project documentation and code, reverse-engineer the necess
   1. Read the URS-TEMPLATE.MD template file from the template directory.
   2. Reverse-engineer the User Requirement Specification from the current project's code and documents, filling it in according to the template file format.
   3. Store the reverse-engineered requirement specification at docs/{project-abbreviation}-v0.0.1/ {project-abbreviation}-urs-v0.0.1.md. If the project is an empty project, write an empty MD.
-  4. Copy docs/{project-abbreviation}-v0.0.1/ {project-abbreviation}-urs-v0.0.1.md to docs/{project-abbreviation}-urs.md.
+  4. Do not copy the full content to docs/{project-abbreviation}-urs.md. Instead, extract a summary from the current version's URS (requirement number / name / description summary / priority, plus a summary of business goals / scenarios / constraints / assumptions, including a version-evolution table and a full-document index) and write it to docs/{project-abbreviation}-urs.md. The summary body is **not grouped by version number**; it is reorganized by "project → module → business scenario" and ordered by business logic (main flow first, then side flows). Version information is carried by the source-version column and the version-evolution table. The full content stays in the version-directory document.
+  5. The functional requirements (FR) and non-functional requirements (NFR) in the URS are numbered globally unique to the project, in the format "prefix-vVersion-sequential", e.g. FR-v0.0.1-001.
 
 ### f) Product Requirement Document Initialization
 - Skill: impm-init-prd
@@ -99,7 +107,8 @@ Based on the current project documentation and code, reverse-engineer the necess
   1. Read the PRD-TEMPLATE.MD template file from the template directory.
   2. Reverse-engineer the Product Requirement Document from the current project's code and documents, as well as the URS document, filling it in according to the template file format.
   3. Store the reverse-engineered requirement document at docs/{project-abbreviation}-v0.0.1/ {project-abbreviation}-prd-v0.0.1.md. If the project is an empty project, write an empty MD.
-  4. Copy docs/{project-abbreviation}-v0.0.1/ {project-abbreviation}-prd-v0.0.1.md to docs/{project-abbreviation}-prd.md.
+  4. Do not copy the full content to docs/{project-abbreviation}-prd.md. Instead, extract a summary from the current version's PRD (feature list F number/name/module/priority/version range, user story US number/title/summary/priority, plus a summary of product background / target users / data requirements / acceptance criteria, including a version-evolution table and a full-document index) and write it to docs/{project-abbreviation}-prd.md. The summary body is **not grouped by version number**; the feature list is grouped by "project → module" and ordered by business logic within each module, and user stories are grouped by their parent feature/module and logically ordered. Version information is carried by the source-version/version-range columns and the version-evolution table. The full content stays in the version-directory document.
+  5. The feature numbers (F) and user story numbers (US) in the PRD are numbered globally unique to the project, in the format "prefix-vVersion-sequential", e.g. F-v0.0.1-001, US-v0.0.1-001.
 
 ### g) Architecture Design Initialization
 - Skill: impm-init-sad
@@ -179,8 +188,9 @@ Based on the current project documentation and code, reverse-engineer the necess
 - Handling:
   1. Read the URS-TEMPLATE.MD template file from the template directory.
   2. Based on the user's input, and the files mentioned in the user's input, generate the User Requirement Specification according to the template file format.
-  3. Store the User Requirement Specification in the version file directory: docs/{project-abbreviation}-v{current-version-number}/ {project-abbreviation}-urs-v{current-version-number}.md.
-  4. Version progress file: docs/{project-abbreviation}-v{current-version-number}/version_progress.md. Add the first row: step sequence number: previous sequence number + 1, step name: impm-urs-create, step status: completed.
+  3. Requirement numbers use the project-global-unique format "prefix-v{current-version-number}-sequential", e.g. FR-v{current-version-number}-001, NFR-v{current-version-number}-001; requirements that carry over across versions keep their historical number.
+  4. Store the User Requirement Specification in the version file directory: docs/{project-abbreviation}-v{current-version-number}/ {project-abbreviation}-urs-v{current-version-number}.md.
+  5. Version progress file: docs/{project-abbreviation}-v{current-version-number}/version_progress.md. Add the first row: step sequence number: previous sequence number + 1, step name: impm-urs-create, step status: completed.
 
 ### c) Generate PRD Requirement Document
 - Skill: impm-prd-create
@@ -188,8 +198,9 @@ Based on the current project documentation and code, reverse-engineer the necess
 - Handling:
   1. Read the PRD-TEMPLATE.MD template file from the template directory.
   2. Based on the user's input, and the files mentioned in the user's input, generate the Product Requirement Document according to the template file format.
-  3. Store the Product Requirement Document in the version file directory: docs/{project-abbreviation}-v{current-version-number}/ {project-abbreviation}-prd-v{current-version-number}.md.
-  4. Version progress file: docs/{project-abbreviation}-v{current-version-number}/version_progress.md. Add the first row: step sequence number: previous sequence number + 1, step name: impm-prd-create, step status: completed.
+  3. Feature numbers (F) and user story numbers (US) use the project-global-unique format "prefix-v{current-version-number}-sequential", e.g. F-v{current-version-number}-001, US-v{current-version-number}-001; features/user stories that carry over across versions keep their historical number.
+  4. Store the Product Requirement Document in the version file directory: docs/{project-abbreviation}-v{current-version-number}/ {project-abbreviation}-prd-v{current-version-number}.md.
+  5. Version progress file: docs/{project-abbreviation}-v{current-version-number}/version_progress.md. Add the first row: step sequence number: previous sequence number + 1, step name: impm-prd-create, step status: completed.
 
 ### d) Update SAD System Architecture Design
 - Skill: impm-sad-update
@@ -398,7 +409,7 @@ Based on the current project documentation and code, reverse-engineer the necess
 1. Receive the current version number and task number.
 2. Read the current task's test cases by version number and task number: docs/{project-abbreviation}-v{current-version-number}/task_{current-task-number}/testcase.md, and write them separately by test type:
 a) Unit tests: Write unit test functions directly according to the current development language, following the language's conventions and commonly used test plugins.
-b) API tests: Write API test scripts in Python. Place them in scripts/API-TEST/{project-abbreviation}-api-test-v{current-version-number}.py. Each test script uses a unified entry point.
+b) API tests: Generate a Postman Collection v2.1-format JSON case file, and place it in the current version directory docs/{project-abbreviation}-v{current-version-number}/{project-abbreviation}-api-test-v{current-version-number}.postman_collection.json. Each test script uses a unified entry point (scripts/API-TEST/run_api_test.py).
 c) Functional and UI tests: Add a new file under the docs/{project-abbreviation}-v{current-version-number}/ directory: {project-abbreviation}-ui-test-record-v{current-version-number}.md. List everything clearly in it.
 3. Based on the completed test functions and scripts, mark the corresponding function location or script location in testcase.md.
 4. Version progress file: docs/{project-abbreviation}-v{current-version-number}/version_progress.md. Add the first row: step sequence number: previous sequence number + 1, step name: impm-task-coding-writetest, step status: {task-number}-completed.
@@ -434,7 +445,7 @@ c) Functional and UI tests: Add a new file under the docs/{project-abbreviation}
 1. Merge the current version's docs/{project-abbreviation}-v{current-version-number}/ {project-abbreviation}-testcase-v{current-version-number}.md into the main test cases: docs/testcase.md
 2. Run all unit tests in full based on the current development language and test plugins.
 3. Write the unit test results to: docs/{project-abbreviation}-v{current-version-number}/regression-unit-test.md.
-4. Run all test scripts under the scripts/API-TEST/ directory, and write the test results to: docs/{project-abbreviation}-v{current-version-number}/regression-api-test.md.
+4. Run all the API test cases in the current version directory (Postman Collection v2.1, executed with scripts/API-TEST/run_api_test.py), and write the test results to: docs/{project-abbreviation}-v{current-version-number}/regression-api-test.md.
 5. Version progress file: docs/{project-abbreviation}-v{current-version-number}/version_progress.md. Add the first row: step sequence number: previous sequence number + 1, step name: impm-regression-test, step status: completed.
 
 ### b) Code Comments
@@ -468,14 +479,15 @@ c) Functional and UI tests: Add a new file under the docs/{project-abbreviation}
 ### e) Merge All Documents of the Current Version into the Project Master Documents
 - Skill: impm-doc-merge
 - agent: DW
-- Handling:
-1. Merge docs/{project-abbreviation}-v{current-version-number}/ {project-abbreviation}-urs-v{current-version-number}.md into docs/{project-abbreviation}-urs.md; if the target file does not exist, create it first.
-2. Merge docs/{project-abbreviation}-v{current-version-number}/ {project-abbreviation}-prd-v{current-version-number}.md into docs/{project-abbreviation}-prd.md; if the target file does not exist, create it first.
-3. Merge docs/{project-abbreviation}-v{current-version-number}/ {project-abbreviation}-api-v{current-version-number}.md into docs/{project-abbreviation}-api.md; if the target file does not exist, create it first.
-4. Merge docs/{project-abbreviation}-v{current-version-number}/ {project-abbreviation}-dbd-v{current-version-number}.md into docs/{project-abbreviation}-dbd.md; if the target file does not exist, create it first.
-5. Merge docs/{project-abbreviation}-v{current-version-number}/ {project-abbreviation}-dbd-v{current-version-number}.sql into docs/{project-abbreviation}-dbd.sql; if the target file does not exist, create it first.
-6. Merge docs/{project-abbreviation}-v{current-version-number}/ {project-abbreviation}-lld-v{current-version-number}.md into docs/{project-abbreviation}-lld.md; if the target file does not exist, create it first.
-7. Version progress file: docs/{project-abbreviation}-v{current-version-number}/version_progress.md. Add the first row: step sequence number: previous sequence number + 1, step name: impm-doc-merge, step status: completed.
+- Handling: merging uses "refactor-style merge", organizing the master-document structure by the project's organization, code structure, and system architecture, rather than simple appending.
+  1. URS: merge docs/{project-abbreviation}-v{current-version-number}/ {project-abbreviation}-urs-v{current-version-number}.md into docs/{project-abbreviation}-urs.md, merging only the **summary** (requirement numbers FR/NFR, name, one-line description, priority, business ownership), **not grouped by version number**, reorganized by "project → module → business scenario" and ordered by business logic (main flow first, side flows after), with version information carried by the source-version column and the version-evolution table; do not merge the full content; create the master document first if it does not exist. The full content stays in the version-directory document.
+  2. PRD: merge docs/{project-abbreviation}-v{current-version-number}/ {project-abbreviation}-prd-v{current-version-number}.md into docs/{project-abbreviation}-prd.md, merging only the **summary** (feature list F, user stories US), **not grouped by version number**; the feature list is grouped by "project → module" and ordered by business logic within each module, and user stories are grouped by their parent feature/module and logically ordered, with version information carried by the source-version/version-range columns and the version-evolution table; do not merge the full content; create the master document first if it does not exist.
+  3. API: merge docs/{project-abbreviation}-v{current-version-number}/ {project-abbreviation}-api-v{current-version-number}.md into docs/{project-abbreviation}-api.md, using **module-grouped refactor-style merge**: new interfaces are inserted into their module group, existing interfaces are updated in place with a version annotation, and deprecated interfaces are moved into a decommissioned subsection.
+  4. DBD: merge docs/{project-abbreviation}-v{current-version-number}/ {project-abbreviation}-dbd-v{current-version-number}.md into docs/{project-abbreviation}-dbd.md, using **business-domain/module → table refactor-style merge**: new tables are inserted into their business domain, existing tables are updated in place with a change-version annotation, deprecated tables are moved into a decommissioned-table subsection, and the ER diagram is updated accordingly.
+  5. SQL: merge docs/{project-abbreviation}-v{current-version-number}/ {project-abbreviation}-dbd-v{current-version-number}.sql into docs/{project-abbreviation}-dbd.sql, using **refactor-style merge**: new tables append CREATE, existing tables generate ALTER or update the original CREATE, keeping it fully executable from scratch with no duplicate conflicts, and each block is annotated with its source version.
+  6. LLD: merge docs/{project-abbreviation}-v{current-version-number}/ {project-abbreviation}-lld-v{current-version-number}.md into docs/{project-abbreviation}-lld.md, using **module/business-flow refactor-style merge**: new modules are inserted at a position consistent with the architecture, existing modules are updated in place with a revision-version annotation.
+  7. When merging, reference the structural baselines (docs/project.md project map, docs/{project-abbreviation}-sad.md system architecture); maintain a version-evolution table at the head of the master documents to keep versions traceable.
+  8. Version progress file: docs/{project-abbreviation}-v{current-version-number}/version_progress.md. Add the first row: step sequence number: previous sequence number + 1, step name: impm-doc-merge, step status: completed.
 
 ### f) Update readme.md and agent.md
 - Skill: impm-doc-update
@@ -504,14 +516,23 @@ c) Functional and UI tests: Add a new file under the docs/{project-abbreviation}
 ## Skills
 Each of the above steps of the project is defined as an opencode skill.
 
+### Document-Review-Edition Skills (impm-init-review / impm-docs-review / impm-review-edition)
+- Based on the standard impm-init / impm-docs / impm flows, provides a "document review" edition:
+  - **impm-init-review**: steps identical to impm-init (isinit→git→project→version→urs→prd→sad→dbd→api→lld→task→testcase→commit), except that after each of the 9 document-generation steps (project/urs/prd/sad/dbd/api/lld/task/testcase) completes, the PM first reads the document, extracts a concise summary, and displays it as text in the dialog (display only, not written to a file), then pops up a prompt box via the question tool to ask the user to review the document; the user proceeds to the next step only by choosing "review approved", and "needs revision" regenerates and re-reviews (re-showing the summary) based on the feedback without advancing the next step in the meantime. Steps judged as "no database needed / no interface needed" that produce no new document do not pop up a prompt box.
+  - **impm-docs-review**: steps identical to impm-docs (version creation→URS→PRD→SAD→DBD→API→LLD→task list→RTM→git commit), except that after each of the 7 document-generation steps (urs/prd/sad/dbd/api/lld/task) completes, the PM first reads the document, extracts a concise summary, and displays it as text in the dialog (display only, not written to a file), then pops up a prompt box via the question tool to ask the user to review the document; the user proceeds to the next step only by choosing "review approved", and "needs revision" regenerates and re-reviews (re-showing the summary) based on the feedback without advancing the next step in the meantime. Steps judged as "no change needed / no database needed / no interface needed" that produce no new document do not pop up a prompt box.
+  - **impm-review-edition**: fully consistent with the impm full flow, except that the project initialization phase (impm-init) is replaced by impm-init-review and the requirements analysis and organization phase (impm-docs) is replaced by impm-docs-review, implementing per-document user review throughout the full development process.
+
 ## Commands
 Each skill corresponds to a command.
 Additionally, define several commands:
 1. /impm — Automatically executes all steps of the 4 phases.
 2. /impm-init — Executes all steps of the project initialization phase.
-3. /impm-docs — Executes all steps of the requirements analysis and organization phase.
-4. /impm-coding — Executes all steps of the coding and development phase.
-5. /impm-finish — Executes all steps of the regression testing and version document organization phase.
+3. /impm-init-review — Executes all steps of the project initialization phase (with project/urs/prd/sad/dbd/api/lld/task/testcase document-by-document user review).
+4. /impm-docs — Executes all steps of the requirements analysis and organization phase.
+5. /impm-coding — Executes all steps of the coding and development phase.
+6. /impm-finish — Executes all steps of the regression testing and version document organization phase.
+7. /impm-docs-review — Executes all steps of the requirements analysis and organization phase (with urs/prd/sad/dbd/api/lld/task document-by-document user review).
+8. /impm-review-edition — Executes all steps of the 4 phases (document review edition: Phase 1 uses impm-init-review, Phase 2 uses impm-docs-review).
 
 ## Plugins
 1. Based on the above requirements, decide for yourself which common functions to integrate into a plugin written in TS.

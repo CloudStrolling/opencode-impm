@@ -1,12 +1,12 @@
 ---
 name: impm-regression-test
-description: Executes the version regression test, merging test cases into the master test case, running all unit tests and API tests in full and recording the results, backfilling test cases into and verifying the coverage completeness of the requirements traceability matrix (RTM), and generating the current version quality metrics report (Phase 1: testing metrics, written to regression.md; review-type quality metrics are backfilled in Phase 2 by impm-regression-metrics)
+description: Executes the version regression test, running all unit tests and API tests in full and recording the results, identifying and deleting outdated test cases, backfilling test cases into and verifying the coverage completeness of the requirements traceability matrix (RTM), and generating the current version quality metrics report (Phase 1: testing metrics, written to regression.md; review-type quality metrics are backfilled in Phase 2 by impm-regression-metrics)
 ---
 
 # impm-regression-test Skill
 
 ## Trigger Words
-regression testing, unit testing, API testing, test case merge, requirements traceability matrix, RTM, coverage verification, test coverage, quality metrics, defect metrics, regression
+regression testing, unit testing, API testing, requirements traceability matrix, RTM, coverage verification, test coverage, quality metrics, defect metrics, regression
 
 ## When to Use
 Use when Phase 4 starts and, after all coding development of the version is complete, the whole version needs regression testing; at the same time backfill the test cases into the requirements traceability matrix (RTM) and verify the coverage completeness of all requirements/user stories (design, tasks, test cases).
@@ -35,24 +35,30 @@ This skill is executed by the Test Engineer (subagent_type=te) subagent. Use the
 6. After each step completes, verify that the produced files exist and the content is correct.
 
 ## Execution Steps
-### Step 1: Merge the current version test cases into the master test case
-1. Read the current version test cases docs/{Project Abbreviation}-v{Current Version Number}/{Project Abbreviation}-testcase-v{Current Version Number}.md.
-2. If docs/{Project Abbreviation}-testcase.md does not exist or is empty, create the master test case with the content of the current version test cases.
-3. If it already exists, keep the existing historical content of the master test case, and merge in the test cases newly added or changed in the current version; update the cases with the same case ID using the current version content, and do not lose historical cases.
-4. Call impm_doc_writer (docType=testcase, target=main) to write docs/{Project Abbreviation}-testcase.md.
-5. Verify that the merged master test case file exists and the content is correct.
-
-### Step 2: Run all unit tests in full
+### Step 1: Run all unit tests in full
 1. Get the programming language of the project via impm_project_info, and determine the corresponding unit test plugin and run command (such as mvn test for Java, pytest for Python, npm test for Node, etc.).
 2. Run all unit tests in full; do not skip or selectively run any test.
 3. Record: test time, run environment, run command, total number of cases, number passed, number failed, details and causes of failed cases.
 
-### Step 3: Write the unit test regression results
-1. Organize the results of step 2 into a Markdown document, including: test time, run environment, run command, statistics, list of failed cases and failure causes, conclusion.
+### Step 1.5: Handle outdated test cases (unit tests only)
+1. Analyze the failing test cases from step 1 and identify those whose failure cause is "the case is outdated" (e.g. the tested feature point has been discontinued, the interface has been deprecated, or the business logic has changed so the case no longer applies).
+2. If outdated test cases exist, use the question tool to list these test cases to the user:
+   - Test case ID (TC-{version}-{task number}-{sequence})
+   - Test case name
+   - Path of the test file
+   - Reason for being outdated
+3. Ask the user whether to confirm deleting these outdated test cases.
+4. If the user confirms deletion:
+   a. Delete the corresponding test case entries from the version test case document docs/{Project Abbreviation}-v{Current Version Number}/{Project Abbreviation}-testcase-v{Current Version Number}.md;
+   b. Delete the corresponding test code file or test functions;
+   c. Record the deleted test case list.
+
+### Step 2: Write the unit test regression results
+1. Organize the results of step 1 into a Markdown document, including: test time, run environment, run command, statistics, list of failed cases and failure causes, deletion records of outdated test cases (if any), conclusion.
 2. Call impm_doc_writer (docType=regression-unit) to write docs/{Project Abbreviation}-v{Current Version Number}/regression-unit-test.md.
 3. Verify the file exists and the content is correct.
 
-### Step 4: Run the API tests and write the results
+### Step 3: Run the API tests
 0. **Detect the Python environment** (running the .py API test runner depends on a Python environment; confirm that a usable python exists before executing):
    Determine the usable python run command by checking in the following order:
    a. Directly check whether the shell can access python: run `python --version`; if it fails, try `python3 --version` (on Windows you may also try `py -3 --version`); whichever succeeds, use that successful command as the python run command;
@@ -60,45 +66,59 @@ This skill is executed by the Test Engineer (subagent_type=te) subagent. Use the
    c. If there is no conda either, check the uv-managed python environment: run `uv python list` or `uv run python --version`; if successful, subsequently use `uv run python` (or `uv run --python <version> python`) as the python run command;
    d. If none of the above is usable, conclude that the current environment lacks python and the API tests cannot run; report honestly to the dispatcher and suggest installing python first (official installer / conda / uv installation all work).
 1. Confirm that the API test runner run_api_test.py exists under the scripts/API-TEST/ directory; if it does not exist, copy it from the assets/skills/template/API-TEST-RUNNER.py template to that path.
-2. List all Postman Collection v2.1 API test case files under the scripts/API-TEST/ directory (such as {Project Abbreviation}-api-test-v{Current Version Number}.postman_collection.json).
-3. Use the python run command determined in step 4.0 to call run_api_test.py in turn to run each collection (the `--base-url http://localhost:port` option may be added to specify the address of the service under test), read the aggregated results of the generated scripts/API-TEST/report/api-test-report.json, and record the execution result of each collection (pass/fail, assertion details, error messages).
-4. Organize the results into a Markdown document: collection name, run command, number of cases, number passed, number failed, failure details, conclusion.
-5. Call impm_doc_writer (docType=regression-api) to write docs/{Project Abbreviation}-v{Current Version Number}/regression-api-test.md.
-6. Verify the file exists and the content is correct.
+2. List all Postman Collection v2.1 API test case files under the current version directory docs/{Project Abbreviation}-v{Current Version Number}/ (such as {Project Abbreviation}-api-test-v{Current Version Number}.postman_collection.json).
+3. Use the python run command determined in step 3.0 to call scripts/API-TEST/run_api_test.py in turn to run each collection file under the current version directory docs/{Project Abbreviation}-v{Current Version Number}/ (the `--base-url http://localhost:port` option may be added to specify the address of the service under test), read the aggregated results of the generated scripts/API-TEST/report/api-test-report.json, and record the execution result of each collection (pass/fail, assertion details, error messages).
 
-### Step 5: Requirements traceability matrix (RTM) test case backfill and coverage verification
+### Step 3.5: Handle outdated test cases (API tests only)
+1. Analyze the failing API test cases from step 3 and identify those whose failure cause is "the case is outdated" (e.g. the interface has been discontinued, the request/response format has changed, or the business logic has been adjusted so the case no longer applies).
+2. If outdated test cases exist, use the question tool to list these test cases to the user:
+   - Test case ID (TC-{version}-{task number}-{sequence})
+   - Test case name
+   - Path of the Postman Collection file
+   - Reason for being outdated
+3. Ask the user whether to confirm deleting these outdated test cases.
+4. If the user confirms deletion:
+   a. Delete the corresponding test case entries from the version test case document docs/{Project Abbreviation}-v{Current Version Number}/{Project Abbreviation}-testcase-v{Current Version Number}.md;
+   b. Delete the corresponding items from the Postman Collection JSON file;
+   c. Record the deleted test case list.
+
+### Step 3.6: Write the API test regression results
+1. Organize the results of step 3 into a Markdown document, including: collection name, run command, number of cases, number passed, number failed, failure details, deletion records of outdated test cases (if any), conclusion.
+2. Call impm_doc_writer (docType=regression-api) to write docs/{Project Abbreviation}-v{Current Version Number}/regression-api-test.md.
+3. Verify the file exists and the content is correct.
+
+### Step 4: Requirements traceability matrix (RTM) test case backfill and coverage verification
 1. Call impm_doc_reader (docType=rtm, target=version) to read the current version requirements traceability matrix docs/{Project Abbreviation}-v{Current Version Number}/{Project Abbreviation}-rtm-v{Current Version Number}.md; if the document does not exist, read the master document docs/{Project Abbreviation}-rtm.md, or state that this version did not generate an RTM and skip this step (mark the hint).
-2. Collect this version's test cases: read the current version test cases docs/{Project Abbreviation}-v{Current Version Number}/{Project Abbreviation}-testcase-v{Current Version Number}.md (and the merged master test case docs/{Project Abbreviation}-testcase.md from step 1), and extract all test case IDs (TC-xxx) and their "related requirement IDs" (FR-xxx / US-xxx).
+2. Collect this version's test cases: read the current version test cases docs/{Project Abbreviation}-v{Current Version Number}/{Project Abbreviation}-testcase-v{Current Version Number}.md, and extract all test case IDs (TC-xxx) and their "related requirement IDs" (FR-xxx / US-xxx; requirement/user story IDs are globally unique across the project, e.g. FR-v0.0.1-001, US-v0.0.1-001).
 3. Establish and backfill the "requirement/user story → test case" associations:
    - Based on the "related requirement ID" field in the test cases, associate each test case with its corresponding requirement/user story;
    - Complete/update each association record in the "requirement/user story → test case" section (2.3) of the "2. Traceability matrix" of the RTM, marking the coverage status as "covered"; mark requirements/user stories never associated with any test case as "missing";
    - Synchronously backfill the "has test case" column of each requirement/user story in "3. Coverage completeness verification".
-4. Coverage completeness verification: check one by one whether every original requirement (FR-xxx / NFR-xxx) and user story (US-xxx) in the "1. Requirements/user stories list" simultaneously satisfies all of the following conditions:
+4. Coverage completeness verification: check one by one whether every original requirement (FR-xxx / NFR-xxx) and user story (US-xxx; IDs are all in the globally unique format FR-v{version}-xxx / US-v{version}-xxx) in the "1. Requirements/user stories list" simultaneously satisfies all of the following conditions:
    - Has design (a "covered" record exists under "requirement/user story → design");
    - Has task (a "covered" record exists under "requirement/user story → task");
    - Has test case (a "covered" record exists under "requirement/user story → test case").
    Any unmet condition is regarded as a gap.
 5. Generate/update the issue list: merge the gaps found by the verification (missing design, missing tasks, missing test cases) with the existing issue list, fill them into the "4. Issue list" section of the RTM, give the issue description and handling suggestions, update the status of resolved issues to "resolved", and keep unresolved issues "pending".
-6. Call impm_doc_writer (docType=rtm, target=version, expectedBase=the latest full text read in step 1) to overwrite the complete rtm.md containing the test case associations, the coverage verification, and the issue list (if this version originally has no rtm.md, a new one may be created, or written to the master document per main).
+6. Call impm_doc_writer (docType=rtm, target=version, expectedBase=the latest full text read in step 4.1) to overwrite the complete rtm.md containing the test case associations, the coverage verification, and the issue list (if this version originally has no rtm.md, a new one may be created, or written to the master document per main).
 7. Verify that rtm.md has been written and the verification results are correct.
 
-### Step 6: Generate the version quality metrics report (Phase 1: test metrics)
+### Step 5: Generate the version quality metrics report (Phase 1: test metrics)
 > This step only produces the Phase 1 "testing-type" quality metrics and writes them into regression.md; the "review-type" quality metrics (number of review issues and severity distribution, fix rate, defect density, DRE), because they depend on the review report generated by impm-coding-review, are backfilled into the same regression.md by the Phase 2 skill impm-regression-metrics after the code review completes.
 1. Read the quality metrics report template: call impm_template_reader to read the REGRESSION-TEMPLATE.MD template content.
 2. Aggregate the test metrics needed for Phase 1:
-   - Unit tests: total number of cases, number passed, number failed, pass rate (taken from the regression results of steps 2/3);
-   - API tests: total number of cases, number passed, number failed, pass rate (taken from the regression results of step 4);
-   - Test coverage: requirement/user story case coverage (calculated from the step 5 RTM coverage completeness verification results: covered requirements/user stories / total requirements/user stories); if the tool can produce code/branch coverage, fill it in as well, otherwise mark "not applicable".
+   - Unit tests: total number of cases, number passed, number failed, pass rate (taken from the regression results of steps 1/2);
+   - API tests: total number of cases, number passed, number failed, pass rate (taken from the regression results of steps 3/3.6);
+   - Test coverage: requirement/user story case coverage (calculated from the step 4 RTM coverage completeness verification results: covered requirements/user stories / total requirements/user stories); if the tool can produce code/branch coverage, fill it in as well, otherwise mark "not applicable".
 3. Read the current version regression.md (docType=regression, target=version); if it does not exist, create it per the template; if it exists, keep the historical content and the parts already backfilled in Phase 2, only updating the Phase 1 test metrics.
-4. Call impm_doc_writer (docType=regression, target=version, expectedBase=the latest full text read in step 3) to write docs/{Project Abbreviation}-v{Current Version Number}/regression.md; leave the review quality metrics section (chapters 3~5) pending backfill in Phase 2.
+4. Call impm_doc_writer (docType=regression, target=version, expectedBase=the latest full text read in step 5.3) to write docs/{Project Abbreviation}-v{Current Version Number}/regression.md; leave the review quality metrics section (chapters 3~5) pending backfill in Phase 2.
 5. Verify that regression.md has been written and the test metrics content is correct.
 
-### Step 7: Record progress
+### Step 6: Record progress
 1. Call impm_progress add (impm-regression-test, completed) to record this skill's completion status in version_progress.md.
 2. Verify that this step status has been recorded in version_progress.md.
 
 ## Deliverables
-- docs/{Project Abbreviation}-testcase.md (merged master test case)
 - docs/{Project Abbreviation}-v{Current Version Number}/regression-unit-test.md
 - docs/{Project Abbreviation}-v{Current Version Number}/regression-api-test.md
 - docs/{Project Abbreviation}-v{Current Version Number}/{Project Abbreviation}-rtm-v{Current Version Number}.md (with test case associations and coverage verification results backfilled)

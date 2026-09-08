@@ -28,7 +28,7 @@ import { latestVersion, resolveAbbrev } from "../utils/project.js";
 
 export const versionDefinition = {
     description:
-        "Version number management: action=current gets the current latest version number under docs; action=next adds +1 to the z value of the largest version number (hintVersion can be passed to specify a version number); action=init creates the version directory docs/{project English abbreviation}-v{version number} (uses the specified version number when hintVersion is passed, otherwise automatically takes the next version number). Use when creating a version directory or determining the current version number.",
+        "Version number management: action=current gets the current latest version number under docs; action=next computes the next version number (when hintVersion is not passed, adds +1 to the z value of the largest version number; when hintVersion is passed, returns that version number directly and validates its format); action=init creates the version directory docs/{project English abbreviation}-v{version number} (uses the specified version number when hintVersion is passed, otherwise automatically takes the next version number). Use when creating a version directory or determining the current version number.",
 };
 
 /** Determine the version number: use hintVersion with priority when it is valid, otherwise the latest version patch+1, starting from 0.0.1 when there is no version directory; return null when hintVersion is invalid */

@@ -17,7 +17,7 @@
 - **Priority**: P0 / P1 / P2 / P3
 - **Prerequisites**:
 - **Test Type**: Unit Test / API Test / Functional Test / UI Test
-- **Related Requirement ID**: FR-xxx / US-xxx
+- **Related Requirement ID**: FR-xxx / US-xxx (Requirement/User Story IDs are globally unique across the project, e.g. FR-v0.0.1-001, US-v0.0.2-003)
 - **Test Data**:
 - **Test Steps**:
   1.

@@ -47,7 +47,7 @@ When multiple tasks code in parallel, tasks write content to the version directo
 | {Project Abbreviation}-dbd-v{Current Version}.md / .sql | dbd phase | Multiple tasks overwrite concurrently | Same as above: read the latest first, merge this task's table/field/index changes onto the latest content (append SQL by newly added objects, do not rewrite objects others have created), write back with expectedBase, retry on conflict, re-read to verify |
 | {Project Abbreviation}-api-v{Current Version}.md | api phase | Multiple tasks overwrite concurrently | Same as above: read the latest first, merge this task's API definitions, write back with expectedBase, retry on conflict, re-read to verify |
 | {Project Abbreviation}-ui-test-record-v{Current Version}.md | writetest phase | Multiple tasks overwrite concurrently | Same as above: read the latest first, append this task's test record paragraph, write back with expectedBase, retry on conflict |
-| scripts/API-TEST/{Project Abbreviation}-api-test-v{Current Version}.py | writetest phase | Multiple tasks overwrite concurrently | Same as above: read the latest script first, keep others' test functions and entries, only add this task's test functions and register their entries, write back with expectedBase, retry on conflict |
+| {Project Abbreviation}-api-test-v{Current Version}.postman_collection.json (in the version directory docs/{Project Abbreviation}-v{Current Version}/) | writetest phase | Multiple tasks overwrite concurrently | Same as above: read the latest collection JSON first, keep others' items, only add this task's API test items, write back with expectedBase, retry on conflict |
 
 **Universal avoidance iron rules**:
 1. This task only writes files under its own task directory docs/{Project Abbreviation}-v{Current Version}/task_{Task ID}/ (context.md/cs.md/ws.md/testcase.md) and the code files corresponding to this task; writing to other tasks' directories is forbidden.
@@ -101,19 +101,19 @@ Launch the TE subagent to execute the impm-task-coding-testcase skill to write t
 Launch the corresponding subagent by task type (taskType) to execute the impm-task-coding-code skill for coding: backend→BEE subagent, frontend→FEE subagent, common→SSE subagent. Coding only modifies the files corresponding to this task and does not touch others.
 
 ### Step 10: Phase 8 Write Test Scripts
-Launch the TE subagent to execute the impm-task-coding-writetest skill to write unit test functions, the API test automation script (scripts/API-TEST/{Project Abbreviation}-api-test-v{Current Version}.py, complying with the write conflict avoidance rules), and the functional/UI test record document (the ui-test-record document in the version directory, complying with the write conflict avoidance rules).
+Launch the TE subagent to execute the impm-task-coding-writetest skill to write unit test functions, the API test cases (Postman Collection v2.1, in the version directory docs/{Project Abbreviation}-v{Current Version}/{Project Abbreviation}-api-test-v{Current Version}.postman_collection.json, complying with the write conflict avoidance rules), and the functional/UI test record document (the ui-test-record document in the version directory, complying with the write conflict avoidance rules).
 
 ### Step 11: Phase 9 Run Tests
 Launch the TE subagent to execute the impm-task-coding-runtest skill to run all tests and update the test results; if tests fail, fall back to step 3 to re-collect information and code, then re-execute in order; if consecutive failures reach the limit (3 times), abort this task and report the failure cause to the user.
 
 ### Step 12: Record the Completion of the Task Coding
-After all tests pass, call impm_progress (action=add, projectName={Project Name (English)}, version={Current Version}, stepName=impm-task-coding, status={Task ID}-completed) to record that the current task's coding is complete; compile a task completion report and return it to the dispatcher (PM): the output file list, test results, and the list of version directory writes/changes (the changed content of the testcase/dbd/api/ui-test-record/api-test scripts).
+After all tests pass, call impm_progress (action=add, projectName={Project Name (English)}, version={Current Version}, stepName=impm-task-coding, status={Task ID}-completed) to record that the current task's coding is complete; compile a task completion report and return it to the dispatcher (PM): the output file list, test results, and the list of version directory writes/changes (the changed content of the testcase/dbd/api/ui-test-record/api-test cases).
 
 ## Deliverables
 - context.md, cs.md, ws.md, testcase.md under the task directory docs/{Project Abbreviation}-v{Current Version}/task_{Task ID}/
 - The version database design document and SQL scripts, and the API design document (if changes were needed, written back per the merge rules)
 - The task's coding implementation code
-- The API test script scripts/API-TEST/{Project Abbreviation}-api-test-v{Current Version}.py (merged)
+- The API test cases docs/{Project Abbreviation}-v{Current Version}/{Project Abbreviation}-api-test-v{Current Version}.postman_collection.json (Postman Collection v2.1, merged)
 - The functional/UI test record doc docs/{Project Abbreviation}-v{Current Version}/{Project Abbreviation}-ui-test-record-v{Current Version}.md (merged)
 - The progress records in version_progress.md ({Task ID} prefix)
 

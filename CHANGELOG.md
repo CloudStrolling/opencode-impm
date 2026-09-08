@@ -2,6 +2,60 @@
 
 This project follows Semantic Versioning (SemVer): MAJOR.MINOR.PATCH.
 
+## [1.0.0] - 2026-09-08
+
+### Updated
+- Project version unified to 1.0.0 (package.json, package-lock.json, readme.md badge). First stable release of the English edition, synced with opencode-impm-cn v1.0.0 (all functionality functionally equivalent except for language).
+
+## [0.9.7] - 2026-09-08
+
+### Updated
+- Documentation skill refinements: impm-doc-merge merge logic simplified; detail improvements for impm-init-lld, impm-init-testcase, impm-regression-test, impm-task-coding-testcase.
+
+### Fixed
+- API test cases (Postman Collection v2.1) uniformly stored under the version directory `docs/{project abbreviation}-v{current version}/`, executed via the unified `scripts/API-TEST/run_api_test.py` entry; readme/agent/related skills/test skills synced.
+- impm_progress known step names completed: impm-init-review, impm-rtm-create, impm-regression-metrics, impm-docs-review, impm-review-edition, impm-hotfix, impm-hotfix-fix.
+- impm_doc_reader/impm_doc_writer docType description supplemented with `regression`.
+- impm_task_manager: init validation strengthened (title/taskType required), task id lookup case-insensitive, pending summary excludes "in progress" and adds an `inProgress` field.
+- impm_git merge: auto-determine the main branch (main/master); error instead of silently continuing when no main branch exists.
+- impm_template_reader: template name matching supports multiple extensions.
+- impm_version: `next` description clarifies the hintVersion semantics.
+- Install scripts (install.mjs / install.ps1 / install-core.mjs): global-install resource directory aligned (~/.config/opencode); install manifest merges historical pluginNames and records installedVersion.
+
+## [0.9.6] - 2026-09-08
+
+### Added
+- Initialization document review skill (impm-init-review / /impm-init-review): on top of impm-init, adds a "user review confirmation" round after each of project/urs/prd/sad/dbd/api/lld/task/testcase document steps is generated; the next step is entered only after review approval; when changes are needed the document is regenerated and reviewed again.
+- The document-review-edition full-workflow skill now also covers the initialization phase: impm-review-edition phase one uses impm-init-review instead of impm-init (per-document reviewed project initialization), phase two still uses impm-docs-review.
+
+### Updated
+- impm-docs-review and impm-init-review skills, before popping up the review prompt, first read the document under review to extract a concise summary and show it as text in the dialog (display only, not written to any file) for quick preview before review.
+
+## [0.9.5] - 2026-09-07
+
+### Updated
+- impm-git-merge pre-commit check: if the commit conditions are not met (abnormal changes in the working tree, etc.), it does not commit.
+
+## [0.9.4] - 2026-09-07
+
+### Updated
+- DBD document handling improved: impm-dbd-create, impm-doc-merge, impm-init-dbd, impm-task-coding-dbd skills and the DBD template (DBD-TEMPLATE.MD) optimized.
+
+## [0.9.3] - 2026-09-07
+
+### Added
+- API document OpenAPI 3.0 conversion and Swagger UI: while generating the version-level API document, also generate OpenAPI 3.0 JSON (`docs/{abbrev}-v{version}/openapi-v{version}.json`) and a Swagger UI entry (`index.html`); impm-doc-merge merges the API documentation and co-merges the OpenAPI JSON and generates project-level `docs/openapi.json` and `docs/index.html` (referencing the latest merged result).
+- API numbering globally unique: generation syntax impm-api-create/impm-init-api first reads the project-level API document to determine the current maximum number, new interfaces within a version number increment from there; when merging, conflicting numbers are remapped by the master document's maximum number to guarantee cross-version global uniqueness.
+- Project-level API document reorganized by module + business logic: impm-doc-merge merges API documents not sectioned by version, but organized by "module → business logic" order, with each interface keeping a source-version / last-modified-version column.
+- impm_doc_reader/impm_doc_writer add `openapi` and `swagger` document types, wiring the standard paths to the version-level and project-level OpenAPI JSON/Swagger HTML.
+
+## [0.9.2] - 2026-09-06
+
+### Added
+- URS/PRD requirement numbering globally unique across the project: functional requirement (FR), non-functional requirement (NFR), function number (F), and user story (US) numbering format unified to "prefix-v{version}-sequence" (e.g. FR-v0.0.1-001, US-v0.0.2-003); requirements unchanged across versions keep their original numbers, only new/changed ones use the new numbering; URS/PRD/RTM/TESTCASE templates and impm-urs-create/impm-prd-create/impm-init-urs/impm-init-prd/impm-rtm-create/impm-task-create/impm-init-task/impm-regression-test skills apply this rule.
+- URS/PRD master-document summarization: during the initialization phase and impm-doc-merge, the full content is not written; instead a summary is extracted from the current version (global requirement/function/user-story lists, per-version overview of business goals/scenarios/constraints, version evolution table) and written to `docs/{project abbreviation}-urs.md`, `docs/{project abbreviation}-prd.md`, while the full content stays in the version-directory documents.
+- impm-doc-merge refactored merge: master-document structure organized by project organization, code structure, and system architecture — URS/PRD summarized merge; API grouped by module, updated in place, deprecated interfaces moved to a sunset section; DBD merged by business domain/module → table, deprecated tables retained; DBD SQL new-table CREATE/existing-table ALTER stays re-executable; LLD merged by module/business flow and sections refactored as architecture evolves; document headers uniformly maintain a version evolution table.
+
 ## [0.9.0] - 2026-09-04
 
 ### Added
@@ -14,7 +68,7 @@ This project follows Semantic Versioning (SemVer): MAJOR.MINOR.PATCH.
 ### Added
 - Cryptographic algorithm compliance check skill and command (impm-tools-encrypt-check / `/impm-tools-encrypt-check`, executed by the TL): based on the Cryptography Law of the PRC, GB/T 39786-2021 "Information Security Technology — Basic Requirements for Cryptographic Application of Information Systems" and other crypto-compliance standards, it checks the cryptographic algorithms used in code and configuration, verifies whether national crypto algorithms (SM2/SM3/SM4) are used, detects residual weak algorithms (MD5, SHA-1, DES, 3DES, RC4, etc.), and checks for overly short keys and insecure random numbers, outputting the check report `docs/{project abbreviation}-encrypt-check.md`.
 - Algorithm compliance classification system and check report template (`TOOLS-ENCRYPT-CHECK-TEMPLATE.MD`): covers national public algorithms (SM2/SM3/SM4), international strong algorithms, weak hashes (MD5/SHA-1/MD2/MD4), weak symmetric encryption (DES/3DES/RC4/RC2), overly short keys / deprecated algorithms (RSA-1024), and insecure random numbers — six categories in total; provides a multi-language algorithm API mapping table (Python/Java/Node/Go/C#/C/C++) for cross-language identification; classifies weak algorithms by usage context (security vs. non-security) rather than by algorithm name alone; outputs national-crypto coverage assessment and tiered remediation recommendations.
-- Together with the classified-protection level-3 check (impm-cpc-level3) and secrets scanning (impm-tools-secrets-scanning), forms the security/compliance tool suite.
+- Together with the classified-protection level-3 check (impm-tools-cpc-level3) and secrets scanning (impm-tools-secrets-scanning), forms the security/compliance tool suite.
 
 ## [0.8.8] - 2026-09-03
 
@@ -47,7 +101,7 @@ This project follows Semantic Versioning (SemVer): MAJOR.MINOR.PATCH.
 ## [0.8.2] - 2026-08-26
 
 ### Added
-- Classified-protection level-3 check skill and command (impm-cpc-level3 / `/impm-cpc-level3`, executed by the TL): based on GB/T 22239-2019 "Information Security Technology — Baseline for Classified Protection of Cybersecurity" level-3 security requirements, it organizes the core clauses related to software development into a code-review checklist template (`CPC-LEVEL3-TEMPLATE.MD`, covering development process management, identity authentication, access control, security audit, intrusion prevention, data security, personal information protection, and testing & acceptance — 38 items in total).
+- Classified-protection level-3 check skill and command (impm-tools-cpc-level3 / `/impm-tools-cpc-level3`, executed by the TL): based on GB/T 22239-2019 "Information Security Technology — Baseline for Classified Protection of Cybersecurity" level-3 security requirements, it organizes the core clauses related to software development into a code-review checklist template (`TOOLS-CPC-LEVEL3-TEMPLATE.MD`, covering development process management, identity authentication, access control, security audit, intrusion prevention, data security, personal information protection, and testing & acceptance — 38 items in total).
 - When the skill executes, it checks the current project item by item and outputs the check report `docs/{project abbreviation}-cpc-level3-check.md`; the check results are Pass / Fail / Not Applicable, and failed items carry a specific explanation (file location and problem description).
 
 ## [0.8.1] - 2026-08-26

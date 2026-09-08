@@ -31,6 +31,12 @@ export const templateReaderDefinition = {
         "Read the template file: read the template content by template name from .opencode/skills/template, assets/skills/template, or the plugin's built-in directory (e.g. PROJECT-TEMPLATE.MD, TASK-TEMPLATE.json, etc.). Use when reading templates before generating various documents.",
 };
 
+/** Remove the trailing extension from a file name (.md/.json/.txt etc., strip only the last segment) */
+function stripExtension(name: string): string {
+    const idx = name.lastIndexOf(".");
+    return idx > 0 ? name.slice(0, idx) : name;
+}
+
 /** Find the template in a directory: the file name and the template name are matched case-insensitively, and omitting the extension is supported */
 function matchTemplate(dir: string, base: string): string | null {
     if (!existsSync(dir)) {
@@ -40,7 +46,7 @@ function matchTemplate(dir: string, base: string): string | null {
         if (name.toLowerCase() === base.toLowerCase()) {
             return join(dir, name);
         }
-        const [stem] = name.split(".");
+        const stem = stripExtension(name);
         if (stem?.toLowerCase() === base.toLowerCase()) {
             return join(dir, name);
         }
@@ -65,7 +71,7 @@ export function templateReaderExecute(args: {
         if (!name) {
             return { success: false, error: "Missing required parameter templateName (template name)." };
         }
-        const base = name.split(".")[0];
+        const base = stripExtension(name);
 
         const searchDirs = [
             join(args.projectRoot, ".opencode", "skills", "template"),

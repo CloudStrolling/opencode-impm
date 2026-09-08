@@ -1,5 +1,5 @@
 ---
-description: Merges the current version's URS, PRD, API, DBD, DBD SQL, and LLD documents into the project master documents
+description: Restructure-merges the current version's URS, PRD, API, DBD, DBD SQL, and LLD documents into the project master documents (URS/PRD summarized merge)
 agent: pm
 subtask: false
 ---

@@ -91,13 +91,25 @@ export function gitHelperExecute(args: {
             }
             return safe(() => {
                 const outputs: string[] = [];
-                for (const main of ["main", "master"]) {
-                    try {
-                        outputs.push(git.switchBranch(root, main));
-                        break;
-                    } catch {
-                        // Try the next default main branch name
+                const cur = git.getCurrentBranch(root);
+                let switched = cur === "main" || cur === "master";
+                if (!switched) {
+                    for (const main of ["main", "master"]) {
+                        if (git.branchExists(root, main)) {
+                            outputs.push(git.switchBranch(root, main));
+                            switched = true;
+                            break;
+                        }
                     }
+                }
+                if (!switched) {
+                    throw new Error(
+                        "Cannot determine the main branch: neither main nor master exists in the repository. Please create a main branch first before running merge.",
+                    );
+                }
+                const target = git.getCurrentBranch(root);
+                if (target === branchName) {
+                    throw new Error(`Cannot merge the current branch ${target} into itself; please pass the name of a development branch to merge.`);
                 }
                 outputs.push(git.mergeBranch(root, branchName));
                 outputs.push(`Current branch: ${git.getCurrentBranch(root)}`);

@@ -366,11 +366,13 @@ function updateOpenCodeConfig(projectRoot, agentType, assetsDir, pluginRoot, man
  * @param {string} options.projectRoot  - Target project root directory (assets copied to projectRoot/.opencode/)
  * @param {string} options.version      - Current plugin version number (written to manifest)
  * @param {string} [options.agentType]  - Agent model preset type (empty = do not modify agent config)
+ * @param {string} [options.opencodeDirOverride] - Asset installation directory override (default projectRoot/.opencode);
+ *                                          passed as the opencode global config directory for global installs (~/.config/opencode)
  */
-export function runInstall({ pluginRoot, projectRoot, version, agentType = "" }) {
+export function runInstall({ pluginRoot, projectRoot, version, agentType = "", opencodeDirOverride = "" }) {
     const assetsDir = join(pluginRoot, "assets");
     const distDir = join(pluginRoot, "dist");
-    const opencodeDir = join(projectRoot, ".opencode");
+    const opencodeDir = opencodeDirOverride || join(projectRoot, ".opencode");
 
     console.log("============================================");
     console.log("  opencode-impm install");

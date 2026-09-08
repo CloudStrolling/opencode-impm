@@ -41,6 +41,7 @@ Call impm_template_reader to read the template URS-TEMPLATE.MD to clarify the se
 
 ### Step 2: Generate the User Requirement Specification
 Based on the user's input and the files mentioned in the input, generate the User Requirement Specification following the template format. Template sections include: business goals, user roles, business scenarios, functional requirements (high level), non-functional requirements (high level), constraints, assumptions and dependencies. The content must accurately reflect the user's requests, with clear and acceptable language.
+Requirement numbering rule: Functional Requirement (FR) and Non-functional Requirement (NFR) IDs are globally unique across the project, formatted as `prefix-v{current version}-sequence` (e.g. FR-v0.0.1-001, NFR-v0.0.1-001). Sequence numbers increment sequentially from 001 within this version; if a requirement is an existing requirement carried across versions, retain its historical ID, and only newly added or modified requirements are assigned new IDs for this version.
 
 ### Step 3: Write the version document
 Call impm_doc_writer (docType=urs, target=version) to write the generated User Requirement Specification to docs/{project abbreviation}-v{current version}/{project abbreviation}-urs-v{current version}.md.

@@ -1,6 +1,6 @@
 ---
 name: impm-task-coding-api
-description: Determines whether the current task requires changes to the API design; if so, updates the current version's API design document.
+description: Determines whether the current task requires changes to the API design; if so, updates the current version's API design document and synchronously updates the current version's OpenAPI 3.0 JSON.
 ---
 
 # impm-task-coding-api Skill
@@ -63,11 +63,19 @@ If changes are needed:
 3. Call impm_doc_writer (docType=api, target=version, expectedBase=<the latest full text read in step 1>) to write back the version API design document docs/{Project Abbreviation}-v{Current Version}/{Project Abbreviation}-api-v{Current Version}.md; if a concurrent conflict error is returned (the file has been modified by another task), go back to step 1 to re-read the latest content, merge, and write back;
 4. After writing back, immediately re-read to verify that this task's APIs have been written and others' content is intact (version directory write conflict avoidance: when multiple tasks run in parallel, wholesale overwrites based on old snapshots are forbidden); verify that the API definitions are complete.
 
-### Step 7: Record Completion
+### Step 7: Synchronously update the OpenAPI 3.0 JSON
+After the version API design document is updated (interfaces added/modified/deprecated), synchronously update the current version's OpenAPI JSON docs/{Project Abbreviation}-v{Current Version}/openapi-v{Current Version}.json:
+1. Read the current version OpenAPI JSON (if it does not exist, create it with the basic structure: `openapi: 3.0.3`, info.title=project Chinese name, info.version=v{Current Version}, and empty paths/components/tags structures).
+2. Synchronize the interfaces added/modified by this task into paths per the interface definitions (HTTP method, path, summary=interface name, description=functional description, tags=module grouping, parameters extracted from request parameters, requestBody extracted from the request example, responses extracted from the response example).
+3. Deprecated interfaces (if moved to a deprecated section) should be removed from paths or kept with "deprecated" marked in the description.
+4. Write back docs/{Project Abbreviation}-v{Current Version}/openapi-v{Current Version}.json.
+
+### Step 8: Record Completion
 Call impm_progress (action=add, stepName=impm-task-coding-api, status={Task ID}-API design updated).
 
 ## Deliverables
 - docs/{Project Abbreviation}-v{Current Version}/{Project Abbreviation}-api-v{Current Version}.md (if changed)
+- docs/{Project Abbreviation}-v{Current Version}/openapi-v{Current Version}.json (if changed, kept in sync with the md)
 - The progress record in version_progress.md
 
 ## After Completion

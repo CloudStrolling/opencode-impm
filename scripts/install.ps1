@@ -279,6 +279,7 @@ if ($null -eq $manifest) {
         everInstalled    = $everInstalled
         pluginNames      = @()
         pkgJsonTypeModule = $false
+        installedVersion = ""
     }
 } else {
     $merged = @{}
@@ -287,10 +288,13 @@ if ($null -eq $manifest) {
         if ($manifest.everInstalled) { $prev = @($manifest.everInstalled."$dir") }
         $merged[$dir] = @(Merge-Unique $prev $everInstalled[$dir])
     }
+    $prevPluginNames = @()
+    if ($manifest.pluginNames) { $prevPluginNames = @($manifest.pluginNames) }
     $manifest = @{
         everInstalled    = $merged
-        pluginNames      = @()
+        pluginNames      = @(Merge-Unique $prevPluginNames $null)
         pkgJsonTypeModule = $manifest.pkgJsonTypeModule
+        installedVersion = ""
     }
 }
 
@@ -466,6 +470,8 @@ if (-not $AgentType) {
 [System.IO.File]::WriteAllText($configPath, ($config | ConvertTo-Json -Depth 10))
 
 # Save cumulative manifest (full overwrite write, used for next install's historical cleanup and uninstall's precise deletion)
+$pkgJson = Get-Content -Path (Join-Path $pluginRoot "package.json") -Raw -Encoding UTF8 | ConvertFrom-Json
+$manifest.installedVersion = $pkgJson.version
 Write-Manifest $opencodeDir $manifest
 Write-Host "Install manifest saved -> $(Get-ManifestPath $opencodeDir)"
 

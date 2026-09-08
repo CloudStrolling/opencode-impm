@@ -45,7 +45,7 @@ Receive the current version and task ID ({Task ID}, e.g., TASK-001) passed by th
 ### Step 2: Read the Test Cases and Write Them by Type
 Call impm_doc_reader (docType=testcase, taskId={Task ID}) to read the current task's test cases, and write them separately by test type:
 1. Unit tests: write unit test functions directly following the habits and common test plugins of the current development language;
-2. API tests: generate a Postman Collection v2.1 format JSON case file and put it in scripts/API-TEST/{Project Abbreviation}-api-test-v{Current Version}.postman_collection.json. First call impm_template_reader to read the API-TEST-COLLECTION-TEMPLATE.json template to understand its structure (focus: info/variable/item/request/expected), then generate items one by one for this task's API-type test cases:
+2. API tests: generate a Postman Collection v2.1 format JSON case file and put it in the current version directory docs/{Project Abbreviation}-v{Current Version}/{Project Abbreviation}-api-test-v{Current Version}.postman_collection.json. First call impm_template_reader to read the API-TEST-COLLECTION-TEMPLATE.json template to understand its structure (focus: info/variable/item/request/expected), then generate items one by one for this task's API-type test cases:
    - item.name = API path + case name + case ID;
    - item.request.method/url/header/body filled in per the case's API and test steps (url.raw uses the `{{base_url}}` placeholder, query is filled as an array, body uses mode=raw when it is JSON);
    - item.event generates pm.test assertion scripts per the case's expected result (status code, business code, field values), for easy debugging in Apifox;
@@ -61,7 +61,7 @@ Call impm_progress (action=add, stepName=impm-task-coding-writetest, status={Tas
 
 ## Deliverables
 - Unit test functions (committed with the source code)
-- API test case scripts/API-TEST/{Project Abbreviation}-api-test-v{Current Version}.postman_collection.json (Postman Collection v2.1)
+- API test cases docs/{Project Abbreviation}-v{Current Version}/{Project Abbreviation}-api-test-v{Current Version}.postman_collection.json (Postman Collection v2.1)
 - The functional/UI test record document docs/{Project Abbreviation}-v{Current Version}/{Project Abbreviation}-ui-test-record-v{Current Version}.md
 - Task directory testcase.md (test locations back-annotated)
 - The progress record in version_progress.md

@@ -54,6 +54,16 @@ export function getCurrentBranch(cwd: string): string {
     return gitExec(cwd, ["rev-parse", "--abbrev-ref", "HEAD"]);
 }
 
+/** Check whether a local branch exists */
+export function branchExists(cwd: string, branchName: string): boolean {
+    try {
+        gitExec(cwd, ["rev-parse", "--verify", "--quiet", `refs/heads/${branchName}`]);
+        return true;
+    } catch {
+        return false;
+    }
+}
+
 /** Pull latest code */
 export function pull(cwd: string): string {
     return gitExec(cwd, ["pull"]);

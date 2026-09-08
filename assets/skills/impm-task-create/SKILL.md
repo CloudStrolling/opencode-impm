@@ -49,7 +49,7 @@ Call impm_doc_reader to read:
 ### Step 3: Generate the task list
 Based on the SAD, the current version PRD, and the current version LLD, complete the current version task list using the JSON format in the template. The task list contains the fields: projectName, version, tasks array. Each task contains: id, title, description, taskType (backend|frontend|common), userStoryId, apiId, upstreamTaskIds, downstreamTaskIds, priority, status ("not started" | "in progress" | "completed"), testMethod, acceptanceCriteria.
 Field mapping rules:
-- userStoryId: fill in the number of the PRD user story implemented by this task (e.g., US-001), obtained from the PRD read in step 2;
+- userStoryId: fill in the number of the PRD user story implemented by this task (e.g., US-v{current version}-001; IDs are globally unique across the project and include the version number), obtained from the PRD read in step 2;
 - apiId: fill in the number of the API interface involved/implemented by this task (e.g., API-001), obtained from the API document read in step 2; when a task involves multiple interfaces, separate them with commas (e.g., API-001,API-002); leave the empty string when the task does not involve interfaces or the project has no API document.
 Tasks must be ordered by upstream/downstream dependency: tasks being depended on come first, tasks that depend on others come after, ensuring the coding phase can execute serially in order.
 

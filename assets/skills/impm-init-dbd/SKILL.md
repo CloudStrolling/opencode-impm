@@ -45,12 +45,13 @@ Read docs/project.md and docs/sad.md via impm_doc_reader to determine whether th
 - Database needed: continue to step 2.
 
 ### Step 2: read the template
-Call impm_template_reader(projectRoot, DBD-TEMPLATE.MD) to read the Database Design Document template, and clarify the template sections: ER diagram, table structure, index design, data dictionary, etc.
+Call impm_template_reader(projectRoot, DBD-TEMPLATE.MD) to read the Database Design Document template, and clarify the template sections: ER diagram, physical model (grouped by subsystem/business module), index design, data dictionary, data initialization, etc.
 
 ### Step 3: reverse-engineer the database design
 Read the existing documents via impm_doc_reader (focus on the PRD, SAD, and the data requirements in the PRD), combine the current project code and documents, and fill in the DBD according to the template format; also reverse-engineer the project initialization SQL statements (database creation, table creation, initial data, etc.):
-- Existing project: reverse-engineer the table structure and index design from the existing code, entity classes, and persistence layer code.
+- Existing project: reverse-engineer the table structure and index design from the existing code, entity classes, and persistence layer code, organize the physical model by subsystem/business module grouping, with table names following the `{subsystem_abbreviation}_{module_abbreviation}_{entity_name}` naming convention.
 - Empty project: write an empty MD and empty SQL (keeping the template structure).
+- Data initialization: identify preset data in the project (enumeration dictionaries, configuration items, initial business data), and write them into Chapter 11 of the DBD document and the SQL script synchronously.
 
 ### Step 4: write the version documents and copy the master documents
 Call impm_doc_writer(projectRoot, dbd, {project Chinese name}, {current version number}, {task number}, main, content): write the version document docs/{project English abbreviation}-v0.0.1/{project English abbreviation}-dbd-v0.0.1.md, and copy it to the master document docs/{project English abbreviation}-dbd.md (create it if the master document does not exist); call impm_doc_writer(projectRoot, sql, {project Chinese name}, {current version number}, {task number}, main, content): write the version document docs/{project English abbreviation}-v0.0.1/{project English abbreviation}-dbd-v0.0.1.sql, and copy it to the master document docs/{project English abbreviation}-dbd.sql (create it if the master document does not exist). Verify that all four files exist and the content is consistent.

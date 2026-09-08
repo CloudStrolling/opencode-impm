@@ -35,6 +35,15 @@ This skill is executed by the Software Configuration Engineer (subagent_type=scm
 6. After each step completes, verify that the produced files exist and the content is correct.
 
 ## Execution Steps
+### Step 0: Precondition check (regression test and code review)
+1. Read the current version regression test report `docs/{project abbreviation}-v{current version}/regression.md`, and check whether all test results passed.
+2. Read the current version code review report `docs/{project abbreviation}-v{current version}/review.md`, and check whether there are any unfixed severe/critical issues.
+3. **If either condition is not met, stop executing immediately** and report to the user:
+   - The specific failed test cases or failure reasons from the regression test
+   - The list of unfixed severe/critical issues from the code review
+   - Prompt the user to handle the above issues first, and manually perform the merge after confirming everything is correct
+4. Only after both are passed may you continue with the subsequent steps.
+
 ### Step 1: Get the current branch name
 1. Call impm_git (action=current-branch) to get the current branch name.
 2. Record the current branch name for the subsequent merge operations.

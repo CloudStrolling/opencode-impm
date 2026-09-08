@@ -60,9 +60,9 @@ Based on the current task's test cases (docType=testcase, taskId={Task ID}), run
       c. If there is no conda either, check the uv-managed python environment: run `uv python list` or `uv run python --version`; on success, use `uv run python` (or `uv run --python <version> python`) as the python run command;
       d. If none of the above is usable, judge that the current environment lacks python and the API tests cannot run; report this truthfully to the dispatcher and prompt to install python first (official installer / conda / uv installation all work).
    2. Check whether the API test runner program run_api_test.py already exists in the target project's scripts/API-TEST/ directory; if not, call impm_template_reader to read the assets/skills/template/API-TEST-RUNNER.py template content and create run_api_test.py in the scripts/API-TEST/ directory (i.e., copy the template to that path);
-   3. Locate this task's API test cases generated in scripts/API-TEST/{Project Abbreviation}-api-test-v{Current Version}.postman_collection.json (Postman Collection v2.1 format);
+   3. Locate this task's API test cases generated in docs/{Project Abbreviation}-v{Current Version}/{Project Abbreviation}-api-test-v{Current Version}.postman_collection.json (Postman Collection v2.1 format);
    4. Use the python run command determined in step 3.1 to call that program to run the API tests, and specify the above Postman Collection JSON file and the optional base address (e.g., `--base-url http://localhost:port`):
-      `<python run command> scripts/API-TEST/run_api_test.py scripts/API-TEST/{Project Abbreviation}-api-test-v{Current Version}.postman_collection.json --report-dir scripts/API-TEST/report`
+      `<python run command> scripts/API-TEST/run_api_test.py docs/{Project Abbreviation}-v{Current Version}/{Project Abbreviation}-api-test-v{Current Version}.postman_collection.json --report-dir scripts/API-TEST/report`
    5. The program reads the collection, sends the requests one by one, compares them against the expected results, and generates a test report (console + scripts/API-TEST/report/api-test-report.md, api-test-report.json); judge whether the API tests pass based on the PASS/FAIL summary in the report.
 
 ### Step 4: Update the Test Results

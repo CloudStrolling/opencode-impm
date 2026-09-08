@@ -80,12 +80,12 @@ Start an SA subagent (subagent_type=sa) to execute the impm-init-version skill: 
 After completion, verify that the version directory and version_progress.md exist.
 
 ### Step e: execute impm-init-urs (User Requirement Specification)
-Start a BA subagent (subagent_type=ba) to execute the impm-init-urs skill: have the BA call impm_template_reader(projectRoot, URS-TEMPLATE.MD) to read the template, reverse-engineer or generate the User Requirement Specification according to the empty structure, and use impm_doc_writer docType=urs target=main to write the version document docs/{project English abbreviation}-v0.0.1/{project English abbreviation}-urs-v0.0.1.md and copy it to the master document docs/{project English abbreviation}-urs.md.
-After completion, verify that both files exist and the content is consistent, and verify/back-fill the progress line (impm-init-urs, completed).
+Start a BA subagent (subagent_type=ba) to execute the impm-init-urs skill: have the BA call impm_template_reader(projectRoot, URS-TEMPLATE.MD) to read the template, reverse-engineer or generate the User Requirement Specification according to the empty structure, and use impm_doc_writer docType=urs target=version to write the complete version document docs/{project English abbreviation}-v0.0.1/{project English abbreviation}-urs-v0.0.1.md, then extract a summary and write it to the master document docs/{project English abbreviation}-urs.md (without copying the full content).
+After completion, verify that the version document has complete content and the master document has summary content, and verify/back-fill the progress line (impm-init-urs, completed).
 
 ### Step f: execute impm-init-prd (Product Requirement Document)
-Start a BA subagent (subagent_type=ba) to execute the impm-init-prd skill: have the BA call impm_template_reader(projectRoot, PRD-TEMPLATE.MD) to read the template, reverse-engineer or generate the Product Requirement Document according to the project code, documents, and URS, and use impm_doc_writer docType=prd target=main to write the version document docs/{project English abbreviation}-v0.0.1/{project English abbreviation}-prd-v0.0.1.md and copy it to the master document docs/{project English abbreviation}-prd.md.
-After completion, verify that both files exist and the content is consistent, and verify/back-fill the progress line (impm-init-prd, completed).
+Start a BA subagent (subagent_type=ba) to execute the impm-init-prd skill: have the BA call impm_template_reader(projectRoot, PRD-TEMPLATE.MD) to read the template, reverse-engineer or generate the Product Requirement Document according to the project code, documents, and URS, and use impm_doc_writer docType=prd target=version to write the complete version document docs/{project English abbreviation}-v0.0.1/{project English abbreviation}-prd-v0.0.1.md, then extract a summary and write it to the master document docs/{project English abbreviation}-prd.md (without copying the full content).
+After completion, verify that the version document has complete content and the master document has summary content, and verify/back-fill the progress line (impm-init-prd, completed).
 
 ### Step g: execute impm-init-sad (System Architecture Design)
 Start an SA subagent (subagent_type=sa) to execute the impm-init-sad skill: have the SA call impm_template_reader(projectRoot, SAD-TEMPLATE.MD) to read the template, reverse-engineer or generate the System Architecture Design document according to the project code, documents, and PRD, and use impm_doc_writer docType=sad target=main to write docs/sad.md (sad only has the master document, no in-version document).
@@ -112,7 +112,7 @@ Start a TL subagent (subagent_type=tl) to execute the impm-init-task skill: have
 After completion, verify that the file exists and the JSON format is correct, and verify/back-fill the progress line (impm-init-task, completed).
 
 ### Step l: execute impm-init-testcase (test cases and test scripts)
-Start a TE subagent (subagent_type=te) to execute the impm-init-testcase skill: have the TE call impm_template_reader(projectRoot, TESTCASE-TEMPLATE.MD) to read the template, determine the test cases according to the project code, documents, PRD, and LLD, use impm_doc_writer docType=testcase target=main to write the version document docs/{project English abbreviation}-v0.0.1/{project English abbreviation}-testcase-v0.0.1.md and copy it to the master document docs/{project English abbreviation}-testcase.md; complete the writing of test functions according to the cases, and generate automated test scripts (under scripts/API-TEST/).
+Start a TE subagent (subagent_type=te) to execute the impm-init-testcase skill: have the TE call impm_template_reader(projectRoot, TESTCASE-TEMPLATE.MD) to read the template, determine the test cases according to the project code, documents, PRD, and LLD, use impm_doc_writer docType=testcase target=main to write the version document docs/{project English abbreviation}-v0.0.1/{project English abbreviation}-testcase-v0.0.1.md and copy it to the master document docs/{project English abbreviation}-testcase.md; complete the writing of test functions according to the cases, and generate Postman Collection v2.1 API test cases (in the version directory docs/{project English abbreviation}-v0.0.1/, executed with scripts/API-TEST/run_api_test.py).
 After completion, verify that the documents and scripts exist, and verify/back-fill the progress line (impm-init-testcase, completed).
 
 ### Step m: execute impm-init-commit (final commit)
@@ -128,7 +128,7 @@ Call impm_progress(projectRoot, {project English abbreviation}, {current version
 - Task list docs/{project English abbreviation}-v0.0.1/{project English abbreviation}-task-v0.0.1.json
 - Version progress table version_progress.md
 - .gitignore and the git initial commit record
-- Automated test scripts scripts/API-TEST/
+- Postman Collection v2.1 API test cases (version directory) and runner scripts/API-TEST/run_api_test.py
 
 ## Completion tips
 - The initialization phase is fully complete; there are no subsequent steps.

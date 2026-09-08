@@ -54,20 +54,27 @@ This skill is executed (orchestrated) by the Project Manager (main Agent), who l
 
 ## User document review confirmation round (executed directly by the PM)
 
-The "document review confirmation" round below is triggered after each of the 7 document generation steps urs/prd/sad/dbd/api/lld/task completes. The PM uses the question tool to pop up a prompt box, showing the user the generated document path and content highlights for review.
+The "document review confirmation" round below is triggered after each of the 7 document generation steps urs/prd/sad/dbd/api/lld/task completes, and consists of "document summary extraction and display" and "pop up review prompt box" two steps. The PM pops up a prompt box via the question tool for the user to review.
 
+### Step 1: Document summary extraction and display (pre-prompt, PM directly executes)
+Before each review prompt box is triggered, the PM must first extract a concise summary of the document under review and display it as plain text directly in the current conversation for the user to quickly preview. Requirements:
+1. Read the document: use the read tool (or impm_doc_reader) to read the full text of the just-generated document (prefer reading the complete version document docs/{project abbreviation}-v{current version}/{project abbreviation}-{document abbreviation}-v{current version}.md; for master-document-only reads, read the master document).
+2. Extract summary: distill a concise summary, generally including: document title and full path, document chapter structure, core content highlights (e.g., requirement objectives and key requirements/user stories, architecture decisions, data table/field lists, API lists, task list scope and categories, etc.).
+3. Display method: output the summary as text directly into the conversation (for user quick preview only, **do not write to any file**); keep it concise, highlight key information, and avoid copying the full text.
+
+### Step 2: Pop up review prompt box (question tool)
 **Review option design** (question tool):
 - header: `Review {document abbreviation}`
-- question: `Generated {full document path}. Please review the document. Only after the review is approved will we proceed to the next step; if changes are needed, select "Needs Changes" and provide the revision feedback.`
+- question: `Generated {full document path} (summary has been displayed in the conversation above). Please review the document. Only after the review is approved will we proceed to the next step; if changes are needed, select "Needs Changes" and provide the revision feedback.`
 - options:
-  - `Approved`（description: The document content is correct; confirm to proceed to the next step）
-  - `Needs Changes`（description: The document has issues; after providing revision feedback it will be regenerated and reviewed again）
+  - `Approved` (description: The document content is correct; confirm to proceed to the next step)
+  - `Needs Changes` (description: The document has issues; after providing revision feedback it will be regenerated and reviewed again)
 
 **Handling logic**:
 1. If the user selects "Approved", verify version_progress.md has recorded the corresponding step status as "completed", then go to the next step.
 2. If the user selects "Needs Changes" (or provides revision feedback via custom input):
    - The PM consolidates the user's revision feedback and re-dispatches the corresponding document-generation subagent (same subagent_type, same skill) with it as supplementary context to regenerate the document;
-   - After the sub-step completes, pop up the prompt box again for the user to review, until the user selects "Approved" (if it repeatedly fails to pass, first confirm with the user the feasibility of the revision feedback to avoid pointless to-and-fro);
+   - After the sub-step completes, execute "Step 1: Document summary extraction and display" again (re-extract the new document summary and display it in the conversation), then pop up the prompt box for the user to review, until the user selects "Approved" (if it repeatedly fails to pass, first confirm with the user the feasibility of the revision feedback to avoid pointless to-and-fro);
    - During this period, do not advance to the next step.
 3. Note: some steps may be determined as "no changes needed / no database needed / no API needed" (e.g., sad-update="no changes needed", dbd-create="no database needed", api-create="no API needed"). In this case, skip them following the original impm-docs handling, do not trigger the review prompt box (content that needs no review does not pop up), record the progress status truthfully, and proceed to the next step; if the step actually produced a document (e.g., the expert judged changes needed and has produced a new document), the user must still be prompted to review.
 
@@ -87,37 +94,37 @@ After completion, read docs/{project abbreviation}-v{current version}/version_pr
 ### Step 3: Run impm-urs-create (with review)
 1. Launch the BA subagent to load with the Skill tool and run the impm-urs-create skill, generating the User Requirement Specification and writing it to docs/{project abbreviation}-v{current version}/{project abbreviation}-urs-v{current version}.md.
 2. After completion, verify the file exists and version_progress.md has recorded the impm-urs-create status as "completed".
-3. **Document review confirmation (URS)**: per the "User document review confirmation round" above, pop up a prompt box for the user to review the URS document; proceed to the next step only after the review is approved.
+3. **Document review confirmation (URS)**: per the "User document review confirmation round" above (first extract the document summary and display it in the conversation, then pop up the prompt box), ask the user to review the URS document; proceed to the next step only after the review is approved.
 
 ### Step 4: Run impm-prd-create (with review)
 1. Launch the BA subagent to load with the Skill tool and run the impm-prd-create skill, generating the Product Requirement Document and writing it to docs/{project abbreviation}-v{current version}/{project abbreviation}-prd-v{current version}.md.
 2. After completion, verify the file exists and version_progress.md has recorded the impm-prd-create status as "completed".
-3. **Document review confirmation (PRD)**: pop up a prompt box for the user to review the PRD document; proceed to the next step only after the review is approved.
+3. **Document review confirmation (PRD)**: per the "User document review confirmation round" above (first extract the document summary and display it in the conversation, then pop up the prompt box), ask the user to review the PRD document; proceed to the next step only after the review is approved.
 
 ### Step 5: Run impm-sad-update (with review)
 1. Launch the SA subagent to load with the Skill tool and run the impm-sad-update skill, evaluating and updating the system architecture design document docs/{project abbreviation}-sad.md.
 2. After completion, verify version_progress.md has recorded the impm-sad-update status as "completed" or "no changes needed".
-3. **Document review confirmation (SAD)**: if this step actually updated/produced the SAD document (status "completed" and docs/{project abbreviation}-sad.md has substantive updates), pop up a prompt box for the user to review; if the status is "no changes needed" and no new content was produced, do not pop up and go directly to the next step.
+3. **Document review confirmation (SAD)**: if this step actually updated/produced the SAD document (status "completed" and docs/{project abbreviation}-sad.md has substantive updates), per the "User document review confirmation round" above (first extract the document summary and display it in the conversation, then pop up the prompt box), ask the user to review; if the status is "no changes needed" and no new content was produced, do not pop up and go directly to the next step.
 
 ### Step 6: Run impm-dbd-create (with review)
 1. Launch the DBA subagent to load with the Skill tool and run the impm-dbd-create skill, generating the database design document and SQL scripts.
 2. After completion, verify version_progress.md has recorded the impm-dbd-create status as "completed" or "no database needed".
-3. **Document review confirmation (DBD)**: if the DBD document was actually produced (status "completed"), pop up a prompt box for the user to review; if "no database needed", do not pop up and go to the next step.
+3. **Document review confirmation (DBD)**: if the DBD document was actually produced (status "completed"), per the "User document review confirmation round" above (first extract the document summary and display it in the conversation, then pop up the prompt box), ask the user to review; if "no database needed", do not pop up and go to the next step.
 
 ### Step 7: Run impm-api-create (with review)
 1. Launch the TL subagent to load with the Skill tool and run the impm-api-create skill, generating the API interface design document.
 2. After completion, verify version_progress.md has recorded the impm-api-create status as "completed" or "no API needed".
-3. **Document review confirmation (API)**: if the API document was actually produced (status "completed"), pop up a prompt box for the user to review; if "no API needed", do not pop up and go to the next step.
+3. **Document review confirmation (API)**: if the API document was actually produced (status "completed"), per the "User document review confirmation round" above (first extract the document summary and display it in the conversation, then pop up the prompt box), ask the user to review; if "no API needed", do not pop up and go to the next step.
 
 ### Step 8: Run impm-lld-create (with review)
 1. Launch the TL subagent to load with the Skill tool and run the impm-lld-create skill, generating the detailed design document and writing it to docs/{project abbreviation}-v{current version}/{project abbreviation}-lld-v{current version}.md.
 2. After completion, verify the file exists and version_progress.md has recorded the impm-lld-create status as "completed".
-3. **Document review confirmation (LLD)**: pop up a prompt box for the user to review the LLD document; proceed to the next step only after the review is approved.
+3. **Document review confirmation (LLD)**: per the "User document review confirmation round" above (first extract the document summary and display it in the conversation, then pop up the prompt box), ask the user to review the LLD document; proceed to the next step only after the review is approved.
 
 ### Step 9: Run impm-task-create (with review)
 1. Launch the TL subagent to load with the Skill tool and run the impm-task-create skill, generating the task list docs/{project abbreviation}-v{current version}/{project abbreviation}-task-v{current version}.json.
 2. After completion, verify the file exists and version_progress.md has recorded the impm-task-create status as "completed".
-3. **Document review confirmation (task list)**: pop up a prompt box for the user to review the task list; proceed to the next step only after the review is approved.
+3. **Document review confirmation (task list)**: per the "User document review confirmation round" above (first extract the task list summary and display it in the conversation, then pop up the prompt box), ask the user to review the task list; proceed to the next step only after the review is approved.
 
 ### Step 10: Run impm-rtm-create
 Launch the TL subagent to load with the Skill tool and run the impm-rtm-create skill. Based on the current version's URS, PRD, LLD and task list, build the many-to-many "requirement → design → task" traceability matrix and write it to docs/{project abbreviation}-v{current version}/{project abbreviation}-rtm-v{current version}.md.

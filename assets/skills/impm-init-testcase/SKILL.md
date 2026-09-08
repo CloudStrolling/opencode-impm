@@ -1,6 +1,6 @@
 ---
 name: impm-init-testcase
-description: Reads the TESTCASE-TEMPLATE.MD template, determines test cases from the project code, documents, PRD, and LLD, writes the unit test functions and generates the Postman Collection v2.1 interface test cases (scripts/API-TEST/, executed together with run_api_test.py). Use when test cases need to be written during the initialization phase.
+description: Reads the TESTCASE-TEMPLATE.MD template, determines test cases from the project code, documents, PRD, and LLD, writes the unit test functions and generates the Postman Collection v2.1 interface test cases (in the version directory docs/{project English abbreviation}-v{current version}/, executed together with scripts/API-TEST/run_api_test.py). Use when test cases need to be written during the initialization phase.
 ---
 
 # impm-init-testcase Skill
@@ -47,21 +47,27 @@ Read the existing documents via impm_doc_reader (focus on the PRD, LLD, and the 
 - Existing project: determine the cases based on the existing features and code.
 - Empty project: write an empty document according to the template structure, keeping the section titles and filling the content with "to be supplemented" or empty values.
 
-### Step 3: write the version document and copy the master document
-Call impm_doc_writer(projectRoot, testcase, {project Chinese name}, {current version number}, {task number}, main, content): write the version document docs/{project English abbreviation}-v0.0.1/{project English abbreviation}-testcase-v0.0.1.md, and copy it to the master document docs/{project English abbreviation}-testcase.md (create it if the master document does not exist). Verify that both files exist and the content is consistent.
+### Step 3: write the version document
+Call impm_doc_writer(projectRoot, testcase, {project Chinese name}, {current version number}, {task number}, version, content): write the version document docs/{project English abbreviation}-v0.0.1/{project English abbreviation}-testcase-v0.0.1.md. Verify that the file exists and its content is correct.
+
+### Test case numbering rule
+Each test case must have a globally unique number in the format: `TC-{version}-{task number}-{current sequence}`. For example: `TC-v0.0.1-TASK-001-001`. Where:
+- Version: the version number currently being executed
+- Task number: the associated task number (in the initialization phase, TASK-001 may be used)
+- Current sequence: the incrementing sequence number of test cases under that task, starting from 001, zero-padded to three digits
 
 ### Step 4: write the unit test functions
 For the unit test part of the test cases, write the unit test functions: the test functions correspond one-to-one with the cases, and the function names, parameters, and assertions remain consistent with the test steps and expected results of the cases.
 
 ### Step 5: write the API interface test cases (Postman Collection v2.1)
-For the API interface tests in the test cases, generate the JSON case file in Postman Collection v2.1 format, place it at scripts/API-TEST/{project English abbreviation}-api-test-v0.0.1.postman_collection.json, and use it together with the interface test execution program:
+For the API interface tests in the test cases, generate the JSON case file in Postman Collection v2.1 format, place it in the current version directory docs/{project English abbreviation}-v0.0.1/{project English abbreviation}-api-test-v0.0.1.postman_collection.json, and use it together with the interface test execution program:
 1. Confirm that the interface test execution program run_api_test.py already exists under scripts/API-TEST/; if it does not exist, copy it from the template assets/skills/template/API-TEST-RUNNER.py to that path (i.e., create run_api_test.py).
 2. According to the API-TEST-COLLECTION-TEMPLATE.json template structure, generate an item for each interface case:
    - item.name = interface path + case name + case ID;
    - item.request.method/url/header/body filled in according to the case's interface and test steps (use the `{{base_url}}` placeholder in url.raw; fill query as an array; when body is JSON, use mode=raw);
    - In item.event, generate the pm.test assertion script according to the case's expected results (status code, business code, field values), for convenient debugging in Apifox;
    - Fill item.expected with the structured assertions according to the case's expected results (status status code, max_response_time response time upper limit, headers included response headers, assertions response body assertions: type=json with path+equals/contains, type=body_contains with value); this expected field is read and executed by API-TEST-RUNNER.py and must be consistent with the actual interface expectations.
-3. The interface tests are executed via `python scripts/API-TEST/run_api_test.py scripts/API-TEST/{project English abbreviation}-api-test-v0.0.1.postman_collection.json --report-dir scripts/API-TEST/report`; the program reads the collection, sends each request, compares against the expected results, and generates a test report (console + scripts/API-TEST/report/api-test-report.md, api-test-report.json). **Before running, detect the Python environment** (running the .py interface test program depends on the python environment):
+3. The interface tests are executed via `python scripts/API-TEST/run_api_test.py docs/{project English abbreviation}-v0.0.1/{project English abbreviation}-api-test-v0.0.1.postman_collection.json --report-dir scripts/API-TEST/report`; the program reads the collection, sends each request, compares against the expected results, and generates a test report (console + scripts/API-TEST/report/api-test-report.md, api-test-report.json). **Before running, detect the Python environment** (running the .py interface test program depends on the python environment):
    a. Directly detect whether the shell can access python: execute `python --version`; if it fails, try `python3 --version` (on Windows, also try `py -3 --version`); if any succeeds, use the successful command as the python run command;
    b. If there is no directly usable python, detect the conda environment: execute `conda env list` to list the environments, choose any one (such as base) and execute `conda run -n <env name> python --version` to verify; on success, subsequently use `conda run -n <env name> python` as the python run command;
    c. If there is no conda either, detect a uv-managed python environment: execute `uv python list` or `uv run python --version`; on success, subsequently use `uv run python` (or `uv run --python <version> python`) as the python run command;
@@ -72,8 +78,7 @@ Call impm_progress(projectRoot, {project English abbreviation}, {current version
 
 ## Deliverables
 - docs/{project English abbreviation}-v0.0.1/{project English abbreviation}-testcase-v0.0.1.md
-- docs/{project English abbreviation}-testcase.md
-- scripts/API-TEST/{project English abbreviation}-api-test-v0.0.1.postman_collection.json (Postman Collection v2.1 interface test cases)
+- docs/{project English abbreviation}-v0.0.1/{project English abbreviation}-api-test-v0.0.1.postman_collection.json (Postman Collection v2.1 interface test cases)
 - scripts/API-TEST/run_api_test.py (the interface test execution program, copied from the template)
 
 ## Completion tips

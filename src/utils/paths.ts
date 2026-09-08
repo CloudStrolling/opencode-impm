@@ -44,6 +44,8 @@ export type DocType =
     | "rtm"
     | "apifox-openapi"
     | "apifox-postman"
+    | "openapi"
+    | "swagger"
     | "readme"
     | "agent"
     | "deploy-build"
@@ -220,6 +222,17 @@ export function getDocPath(
                 versionDir(projectRoot, abbrev, version),
                 `${abbrev}-apifox-postman-v${normalizeVersion(version)}.json`,
             );
+        case "openapi":
+            return target === "main"
+                ? join(docsRoot(projectRoot), "openapi.json")
+                : join(
+                      versionDir(projectRoot, abbrev, version),
+                      `openapi-v${normalizeVersion(version)}.json`,
+                  );
+        case "swagger":
+            return target === "main"
+                ? join(docsRoot(projectRoot), "index.html")
+                : join(versionDir(projectRoot, abbrev, version), "index.html");
         default:
             throw new Error(`Unknown document type: ${docType}`);
     }

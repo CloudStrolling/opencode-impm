@@ -53,13 +53,13 @@ Call impm_doc_reader (docType=context, docType=cs, docType=ws, taskId={Task ID})
 Call impm_doc_reader (docType=dbd, target=main) and (docType=dbd, target=version) to read the main database design document and the current version's database design document.
 
 ### Step 5: Determine Whether Changes Are Needed
-Determine whether the database design requires changes based on the current task's context.md, cs.md, and ws.md:
-- If no changes are needed, call impm_progress (action=add, stepName=impm-task-coding-dbd, status={Task ID}-no database design changes needed), then end this step.
+Determine whether the database design requires changes (substantial schema changes such as adding tables, modifying table structures, adding indexes, data initialization, etc.) based on the current task's context.md, cs.md, and ws.md:
+- If no changes are needed (even if the task involves database-related code, as long as there are no substantial schema changes), call impm_progress (action=add, stepName=impm-task-coding-dbd, status={Task ID}-no database design changes needed), then end this step.
 
 ### Step 6: Update the Database Design Document and Scripts
 If changes are needed:
 1. First call impm_doc_reader (docType=dbd, target=version) and (docType=sql, target=version) to read the **latest content** of the version database design document and SQL scripts (other parallel tasks may have already written to them; merging must be based on the latest content);
-2. On the basis of the latest content, merge the tables, fields, indexes, etc. that this task needs to add/modify (append SQL by newly added objects, do not rewrite objects others have created);
+2. On the basis of the latest content, merge the tables, fields, indexes, etc. that this task needs to add/modify (append SQL by newly added objects, do not rewrite objects others have created); new tables must follow the `{subsystem_abbreviation}_{module_abbreviation}_{entity_name}` naming convention and be inserted under the corresponding subsystem/business module grouping of the physical model; if data initialization is involved, synchronously append INSERT INTO statements to Chapter 11 of the DBD document and the end of the SQL script;
 3. Call impm_doc_writer (docType=dbd, target=version, expectedBase=<the latest full text of the dbd document read in step 1>) to write back the version database design document docs/{Project Abbreviation}-v{Current Version}/{Project Abbreviation}-dbd-v{Current Version}.md; if a concurrent conflict error is returned (the file has been modified by another task), go back to step 1 to re-read the latest content, merge, and write back;
 4. Then call impm_doc_writer (docType=sql, target=version, expectedBase=<the latest full text of the SQL script read in step 1>) to write back the version database script docs/{Project Abbreviation}-v{Current Version}/{Project Abbreviation}-dbd-v{Current Version}.sql; if a concurrent conflict error is returned, go back to step 1 to re-read, merge, and write back;
 5. After writing back, immediately re-read both files to verify that this task's content has been written and others' content is intact (version directory write conflict avoidance: when multiple tasks run in parallel, wholesale overwrites based on old snapshots are forbidden); verify that the two files are consistent and the scripts are executable.

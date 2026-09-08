@@ -48,15 +48,14 @@ Read the existing documents via impm_doc_reader (focus on the PRD, SAD; when nec
 - Existing project: reverse-engineer the module division, class diagram, core business process sequence diagrams, and business rules from the existing code (classes, modules, call chains, business processing flows).
 - Empty project: write an empty document according to the template structure, keeping the section titles and filling the content with "to be supplemented" or empty values.
 
-### Step 3: write the version document and copy the master document
-Call impm_doc_writer(projectRoot, lld, {project Chinese name}, {current version number}, {task number}, main, content): write the version document docs/{project English abbreviation}-v0.0.1/{project English abbreviation}-lld-v0.0.1.md, and copy it to the master document docs/{project English abbreviation}-lld.md (create it if the master document does not exist). Verify that both files exist and the content is consistent.
+### Step 3: write the version document
+Call impm_doc_writer(projectRoot, lld, {project Chinese name}, {current version number}, {task number}, version, content): write the version document docs/{project English abbreviation}-v0.0.1/{project English abbreviation}-lld-v0.0.1.md. Verify that the file exists and its content is correct.
 
 ### Step 4: record progress
 Call impm_progress(projectRoot, {project English abbreviation}, {current version number}, add, impm-init-lld, completed) to record the completion of this step.
 
 ## Deliverables
 - docs/{project English abbreviation}-v0.0.1/{project English abbreviation}-lld-v0.0.1.md
-- docs/{project English abbreviation}-lld.md
 
 ## Completion tips
 - To continue to the next step, enter /impm-init-task

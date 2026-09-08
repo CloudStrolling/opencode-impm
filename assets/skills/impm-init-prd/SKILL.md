@@ -1,6 +1,6 @@
 ---
 name: impm-init-prd
-description: Reads the PRD-TEMPLATE.MD template, reverse-engineers the Product Requirement Document from the project code, documents, and the URS, writes the version document and copies it to the master document docs/{project English abbreviation}-prd.md. Use when the Product Requirement Document needs to be written during the initialization phase.
+description: Reads the PRD-TEMPLATE.MD template, reverse-engineers the Product Requirement Document from the project code, documents, and the URS, writes the full version document and extracts a summary to the master document docs/{project English abbreviation}-prd.md. Use when the Product Requirement Document needs to be written during the initialization phase.
 ---
 
 # impm-init-prd Skill
@@ -46,16 +46,27 @@ Call impm_template_reader(projectRoot, PRD-TEMPLATE.MD) to read the Product Requ
 Read the existing documents via impm_doc_reader (focus on the URS: docs/{project English abbreviation}-urs.md or the in-version urs document, as well as project, sad, etc.), combine the current project code and documents, and fill in the PRD according to the template format:
 - Existing project: reverse-engineer the content of each section from the project code, existing documents, and the URS.
 - Empty project: write an empty document according to the template structure, keeping the section titles and filling the content with "to be supplemented" or empty values.
+- Numbering rule: Feature IDs (F) and User Story IDs (US) are globally unique across the project, formatted as `prefix-v{version}-sequence` (e.g. F-v0.0.1-001, US-v0.0.1-001), with sequence numbers incrementing sequentially from 001 within each version; features/user stories that remain unchanged across versions retain their original IDs.
 
-### Step 3: write the version document and copy the master document
-Call impm_doc_writer(projectRoot, prd, {project Chinese name}, {current version number}, {task number}, main, content): write the version document docs/{project English abbreviation}-v0.0.1/{project English abbreviation}-prd-v0.0.1.md, and copy it to the master document docs/{project English abbreviation}-prd.md (create it if the master document does not exist). Verify that both files exist and the content is consistent.
+### Step 3: write the version document and extract a summary to the master document
+1. Call impm_doc_writer(projectRoot, prd, {project Chinese name}, {current version number}, {task number}, version, full content): write the full version document docs/{project English abbreviation}-v0.0.1/{project English abbreviation}-prd-v0.0.1.md.
+2. Extract a summary from the current version PRD (summary format below), and call impm_doc_writer(projectRoot, prd, {project Chinese name}, {current version number}, {task number}, main, summary content): write the master document docs/{project English abbreviation}-prd.md (create it if it does not exist). The master document only contains the summary, not the full content.
+3. Verify the version document contains full content, the master document contains the summary, and both files exist.
+
+#### PRD Summary Format (written to the master document)
+- Document header: project name, summary description, version evolution table (version / date / change summary / linked full document path), full document index (list of full PRD file paths for each version).
+- 1. Feature List: | Feature ID | Feature Name | Belonging Module | Priority | Version Scope |, grouped by "project → module" and sorted by business logic within a module (main flow first, side flows after); when merged in later versions, insert into the module's logical position, with globally unique non-repeating IDs.
+- 2. User Story List: | User Story ID | Title | One-line Story Summary | Priority | Source Version |, grouped by belonging feature/module, sorted by business logic, with globally unique non-repeating IDs.
+- 3. Product Background / Target Users / Data Requirements / Acceptance Criteria: organize a summary by business topic, not by version section.
+- The body is not sectioned by version number; version information is carried uniformly by the "Source Version / Version Scope" columns and the version evolution table.
+- At the end, note: full content is in the version directory docs/{project English abbreviation}-v0.0.1/{project English abbreviation}-prd-v0.0.1.md.
 
 ### Step 4: record progress
 Call impm_progress(projectRoot, {project English abbreviation}, {current version number}, add, impm-init-prd, completed) to record the completion of this step.
 
 ## Deliverables
-- docs/{project English abbreviation}-v0.0.1/{project English abbreviation}-prd-v0.0.1.md
-- docs/{project English abbreviation}-prd.md
+- docs/{project English abbreviation}-v0.0.1/{project English abbreviation}-prd-v0.0.1.md (full Product Requirement Document)
+- docs/{project English abbreviation}-prd.md (requirement summary aggregate, not full content)
 
 ## Completion tips
 - To continue to the next step, enter /impm-init-sad

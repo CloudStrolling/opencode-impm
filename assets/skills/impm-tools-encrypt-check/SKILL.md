@@ -9,7 +9,7 @@ description: Check cryptographic algorithm compliance in project code and config
 cryptographic algorithm compliance, SM algorithms, SM2, SM3, SM4, weak algorithms, MD5, DES, SHA-1, encryption algorithm check, crypto assessment, encrypt check, crypto compliance, tools-encrypt-check
 
 ## When to Use
-Use when a cryptographic algorithm compliance check is needed for the current project, to verify whether the encryption/hashing/signing algorithms used in code and configurations comply with SM algorithm compliance requirements (using SM2/SM3/SM4 and other SM algorithms), and to detect whether residual weak algorithms such as MD5, DES, 3DES, RC4, SHA-1 are present. Can be executed independently, or appended after Phase 4 code review. Complements classified protection level-3 (impm-cpc-level3) and secrets leak detection (impm-tools-secrets-scanning).
+Use when a cryptographic algorithm compliance check is needed for the current project, to verify whether the encryption/hashing/signing algorithms used in code and configurations comply with SM algorithm compliance requirements (using SM2/SM3/SM4 and other SM algorithms), and to detect whether residual weak algorithms such as MD5, DES, 3DES, RC4, SHA-1 are present. Can be executed independently, or appended after Phase 4 code review. Complements classified protection level-3 (impm-tools-cpc-level3) and secrets leak detection (impm-tools-secrets-scanning).
 
 ## Execution Role
 This skill is executed by a Technical Lead (subagent_type=tl) subagent, using the Skill tool to load this skill.

@@ -32,6 +32,8 @@ export interface RunInstallOptions {
     version: string;
     /** Agent model preset type (empty = do not modify agent config) */
     agentType?: string;
+    /** Resource install directory override (default projectRoot/.opencode; pass the opencode global config directory for global install) */
+    opencodeDirOverride?: string;
 }
 
 declare module "*/install-core.mjs" {
@@ -40,6 +42,7 @@ declare module "*/install-core.mjs" {
         projectRoot: string;
         version: string;
         agentType?: string;
+        opencodeDirOverride?: string;
     }): boolean;
     export function loadManifest(
         opencodeDir: string,

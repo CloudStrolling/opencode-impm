@@ -44,17 +44,17 @@ Receive the current version number passed in by the scheduling party; call impm_
 ### Step 2: Write the tests
 Write the tests according to the existing test framework and the language conventions of the project:
 1. Unit tests: write unit test functions for the functions involved in this sprint's changes in the current development language and with the commonly used test plugins (committed together with the source code);
-2. Interface tests: write interface test scripts with the python language and put them into scripts/API-TEST/{Project Abbreviation}-api-test-v{Current Version}.py; each test script uses a unified entry;
+2. Interface tests: generate a Postman Collection v2.1 format JSON test case file and put it into the version directory docs/{Project Abbreviation}-v{Current Version}/{Project Abbreviation}-api-test-v{Current Version}.postman_collection.json; each test case is executed through a unified entry (scripts/API-TEST/run_api_test.py);
 3. Functional and UI tests: create {Project Abbreviation}-ui-test-record-v{Current Version}.md under the version directory docs/{Project Abbreviation}-v{Current Version}/, calling impm_doc_writer (docType=ui-test-record), and list the steps and records of the functional and UI tests clearly.
 
 ### Step 3: Run the tests
-Run the unit tests and the interface test scripts in full; before running the interface test scripts, first **check the Python environment** (running the .py interface test programs depends on the python environment):
+Run the unit tests and the interface test cases in full; before running the interface test cases, first **check the Python environment** (running the .py interface test programs depends on the python environment):
 1. First check whether the shell can access python: run `python --version`; if it fails, try `python3 --version` (on Windows you can also try `py -3 --version`); if any one succeeds, use that successful command as the python run command;
 2. If there is no directly usable python, check the conda environment: run `conda env list` to list the environments, choose any one (e.g., base) and run `conda run -n <env name> python --version` to verify; if it succeeds, subsequently use `conda run -n <env name> python` as the python run command;
 3. If there is no conda either, check the uv-managed python environment: run `uv python list` or `uv run python --version`; if it succeeds, subsequently use `uv run python` (or `uv run --python <version> python`) as the python run command;
 4. If none of the above is available, judge that the current environment lacks python, the interface tests cannot be executed, report to the scheduling party truthfully and suggest installing python first (a python installation via the official installer / conda / uv is all acceptable).
 
-After confirming a usable python, replace the `python` prefix in the interface test script commands with it and then execute; if any fail, locate the failure cause and fix it (fix the test code problems directly; record the product code problems and return them to the scheduling party to arrange a fix and re-test), and rerun until all pass.
+After confirming a usable python, replace the `python` prefix in the run_api_test.py commands with it and then execute; if any fail, locate the failure cause and fix it (fix the test code problems directly; record the product code problems and return them to the scheduling party to arrange a fix and re-test), and rerun until all pass.
 
 ### Step 4: Record the test results
 Write the test results (passed count/total count, failure details) into docs/{Project Abbreviation}-v{Current Version}/regression-api-test.md, calling impm_doc_writer (docType=regression-api).
@@ -64,7 +64,7 @@ Call impm_progress (action=add, stepName=impm-sprint-test, status=completed).
 
 ## Deliverables
 - The unit test functions (committed together with the source code)
-- The interface test script scripts/API-TEST/{Project Abbreviation}-api-test-v{Current Version}.py
+- The interface test cases docs/{Project Abbreviation}-v{Current Version}/{Project Abbreviation}-api-test-v{Current Version}.postman_collection.json
 - The functional/UI test record document docs/{Project Abbreviation}-v{Current Version}/{Project Abbreviation}-ui-test-record-v{Current Version}.md
 - The test result record docs/{Project Abbreviation}-v{Current Version}/regression-api-test.md
 - The progress records in version_progress.md

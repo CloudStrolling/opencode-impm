@@ -41,13 +41,13 @@ Call impm_template_reader to read the template RTM-TEMPLATE.MD, and clarify the 
 
 ### Step 2: Collect the traceability basis
 Call impm_doc_reader to read:
-1. The current version URS document docs/{Project Abbreviation}-v{Current Version}/{Project Abbreviation}-urs-v{Current Version}.md, and extract the original requirement IDs (FR-xxx, NFR-xxx) and their names, description summaries and priorities;
-2. The current version PRD document docs/{Project Abbreviation}-v{Current Version}/{Project Abbreviation}-prd-v{Current Version}.md, and extract the user story IDs (US-xxx) and their story descriptions;
+1. The current version URS document docs/{Project Abbreviation}-v{Current Version}/{Project Abbreviation}-urs-v{Current Version}.md, and extract the original requirement IDs (FR-xxx, NFR-xxx; IDs are globally unique across the project, formatted as `prefix-v{version}-sequence`, e.g. FR-v0.0.1-001) and their names, description summaries and priorities;
+2. The current version PRD document docs/{Project Abbreviation}-v{Current Version}/{Project Abbreviation}-prd-v{Current Version}.md, and extract the user story IDs (US-xxx; IDs are globally unique across the project, e.g. US-v0.0.1-001) and their story descriptions;
 3. The current version LLD document docs/{Project Abbreviation}-v{Current Version}/{Project Abbreviation}-lld-v{Current Version}.md, and extract the design content (module division, core business processes, business rules, etc., as the design trace objects);
 4. The current version task list docs/{Project Abbreviation}-v{Current Version}/{Project Abbreviation}-task-v{Current Version}.json; obtain each task via impm_doc_reader (docType=task) or impm_task_manager (action=query); extract the task ID (TASK-xxx), the task title (title), userStoryId and apiId, to verify the correspondence between the tasks and the requirements/user stories.
 
 ### Step 3: Establish the complete set of requirements/user stories
-Summarize the original requirements (FR-xxx / NFR-xxx) and the PRD user stories (US-xxx) collected in step 2, deduplicate them, and fill them into the "1. Requirement/User Story List" section of the template to form the complete set of this version's requirements/user stories. Record the ID, type (URS requirement/PRD user story), name, description summary and priority of each entry.
+Summarize the original requirements (FR-xxx / NFR-xxx) and the PRD user stories (US-xxx; all IDs are globally unique by version number) collected in step 2, deduplicate them, and fill them into the "1. Requirement/User Story List" section of the template to form the complete set of this version's requirements/user stories. Record the ID, type (URS requirement/PRD user story), name, description summary and priority of each entry.
 
 ### Step 4: Establish the many-to-many traceability matrix
 According to the "2. Traceability Matrix" section of the template, establish the following association records (many-to-many; one association is one row; the same requirement/user story may correspond to multiple rows):

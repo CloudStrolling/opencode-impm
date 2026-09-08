@@ -1,6 +1,6 @@
 ---
 name: impm-init-urs
-description: Reads the URS-TEMPLATE.MD template, reverse-engineers the User Requirement Specification from the current project code and documents, writes the version document and copies it to the master document docs/{project English abbreviation}-urs.md. Use when the user requirements document needs to be written during the initialization phase.
+description: Reads the URS-TEMPLATE.MD template, reverse-engineers the User Requirement Specification from the current project code and documents, writes the full version document and extracts a summary to the master document docs/{project English abbreviation}-urs.md. Use when the user requirements document needs to be written during the initialization phase.
 ---
 
 # impm-init-urs Skill
@@ -46,16 +46,28 @@ Call impm_template_reader(projectRoot, URS-TEMPLATE.MD) to read the User Require
 Read the existing documents via impm_doc_reader (project, sad, etc.), combine the current project code and documents, and fill in the URS according to the template format:
 - Existing project: reverse-engineer the content of each section from the existing code and documents (business goals, user roles, business scenarios, functional requirements, non-functional requirements, constraints, assumptions and dependencies).
 - Empty project: write an empty document according to the template structure, keeping the section titles and filling the content with "to be supplemented" or empty values.
+- Requirement numbering rule: Functional Requirement (FR) and Non-functional Requirement (NFR) IDs are globally unique across the project, formatted as `prefix-v{version}-sequence` (e.g. FR-v0.0.1-001, NFR-v0.0.1-001), with sequence numbers incrementing sequentially from 001 within each version; requirements that remain unchanged across versions retain their original IDs.
 
-### Step 3: write the version document and copy the master document
-Call impm_doc_writer(projectRoot, urs, {project Chinese name}, {current version number}, {task number}, main, content): write the version document docs/{project English abbreviation}-v0.0.1/{project English abbreviation}-urs-v0.0.1.md, and copy it to the master document docs/{project English abbreviation}-urs.md (create it if the master document does not exist). Verify that both files exist and the content is consistent.
+### Step 3: write the version document and extract a summary to the master document
+1. Call impm_doc_writer(projectRoot, urs, {project Chinese name}, {current version number}, {task number}, version, full content): write the full version document docs/{project English abbreviation}-v0.0.1/{project English abbreviation}-urs-v0.0.1.md.
+2. Extract a summary from the current version URS (summary format below), and call impm_doc_writer(projectRoot, urs, {project Chinese name}, {current version number}, {task number}, main, summary content): write the master document docs/{project English abbreviation}-urs.md (create it if it does not exist). The master document only contains the summary, not the full content.
+3. Verify the version document contains full content, the master document contains the summary, and both files exist.
+
+#### URS Summary Format (written to the master document)
+- Document header: project name, summary description, version evolution table (version / date / change summary / linked full document path), full document index (list of full URS file paths for each version).
+- 1. Requirement List: | Group | Requirement ID | Requirement Name | Requirement Description (one-line summary) | Priority | Source Version |, reorganized by "project → module → business scenario" and sorted by business logic (main flow first, side flows after); when merged in later versions, insert into the belonging business logic position, with globally unique non-repeating IDs.
+- 2. Non-functional Requirement List: | ID | Category | Requirement Description (one-line summary) | Metric | Source Version |, grouped and sorted by category (performance/security/availability, etc.).
+- 3. Business Goals: group and summarize by business line/goal theme, not by version section.
+- 4. Constraints and Assumptions & Dependencies: categorized summary entries by theme, not by version section.
+- The body is not sectioned by version number; version information is carried uniformly by the "Source Version" column and the version evolution table.
+- At the end, note: full content is in the version directory docs/{project English abbreviation}-v0.0.1/{project English abbreviation}-urs-v0.0.1.md.
 
 ### Step 4: record progress
 Call impm_progress(projectRoot, {project English abbreviation}, {current version number}, add, impm-init-urs, completed) to record the completion of this step.
 
 ## Deliverables
-- docs/{project English abbreviation}-v0.0.1/{project English abbreviation}-urs-v0.0.1.md
-- docs/{project English abbreviation}-urs.md
+- docs/{project English abbreviation}-v0.0.1/{project English abbreviation}-urs-v0.0.1.md (full User Requirement Specification)
+- docs/{project English abbreviation}-urs.md (requirement summary aggregate, not full content)
 
 ## Completion tips
 - To continue to the next step, enter /impm-init-prd

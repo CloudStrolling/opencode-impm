@@ -1,5 +1,5 @@
 ---
-description: Generate and write the User Requirement Specification (URS version document + master document)
+description: Generate and write the User Requirement Specification (URS version document complete content + master document summary)
 agent: pm
 subtask: false
 ---

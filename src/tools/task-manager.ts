@@ -34,7 +34,7 @@ import { withFileLock } from "../utils/file-lock.js";
 /** Valid task status set */
 export const TASK_STATUSES = ["not started", "in progress", "completed"] as const;
 
-/** Task item: id/status are required fields, title, userStoryId, apiId, upstreamTaskIds and other fields are passed through */
+/** Task item: id/title/taskType/status are required fields, the rest (userStoryId, apiId, upstreamTaskIds, etc.) are passed through */
 export interface TaskItem {
     id: string;
     title: string;
@@ -95,7 +95,13 @@ function upstreamDone(task: TaskItem, tasks: TaskItem[]): boolean {
     return true;
 }
 
-/** Generate task list summary: total, count by status, list of not-started tasks */
+/** Look up a task by id (case-insensitive, compatible with externally passed lowercase/uppercase ids) */
+function findTask(tasks: TaskItem[], taskId: string): TaskItem | undefined {
+    const id = String(taskId);
+    return tasks.find((t) => String(t.id).toLowerCase() === id.toLowerCase());
+}
+
+/** Generate task list summary: total, count by status, list of pending tasks (excluding "in progress") */
 function summaryOf(tasks: TaskItem[]) {
     const byStatus: Record<string, number> = {};
     for (const t of tasks) {
@@ -108,7 +114,10 @@ function summaryOf(tasks: TaskItem[]) {
         total: tasks.length,
         byStatus,
         pending: tasks
-            .filter((t) => t.status !== "completed")
+            .filter((t) => t.status !== "completed" && t.status !== "in progress")
+            .map((t) => ({ id: t.id, title: t.title })),
+        inProgress: tasks
+            .filter((t) => t.status === "in progress")
             .map((t) => ({ id: t.id, title: t.title })),
     };
 }
@@ -194,6 +203,20 @@ export async function taskManagerExecute(args: {
                         };
                     }
                     seen.add(id);
+                    if (!t.title || String(t.title).trim() === "") {
+                        return {
+                            success: false,
+                            action,
+                            error: `Task ${id} is missing the title field: every task must include a title.`,
+                        };
+                    }
+                    if (!t.taskType || String(t.taskType).trim() === "") {
+                        return {
+                            success: false,
+                            action,
+                            error: `Task ${id} is missing the taskType field: every task must include a task type (backend/frontend/common).`,
+                        };
+                    }
                     const status = TASK_STATUSES.includes(t.status as (typeof TASK_STATUSES)[number])
                         ? (t.status as string)
                         : "not started";
@@ -224,7 +247,7 @@ export async function taskManagerExecute(args: {
 
         if (action === "query") {
             if (args.taskId) {
-                const task = tasks.find((t) => t.id === args.taskId);
+                const task = findTask(tasks, args.taskId);
                 if (!task) {
                     return {
                         success: false,
@@ -275,7 +298,7 @@ export async function taskManagerExecute(args: {
                 }
                 const lockedList = readTaskList(file);
                 const lockedTasks = lockedList.tasks;
-                const task = lockedTasks.find((t) => t.id === taskId);
+                const task = findTask(lockedTasks, taskId);
                 if (!task) {
                     return {
                         success: false,

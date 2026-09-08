@@ -42,6 +42,13 @@ This skill is executed by the Test Engineer (subagent_type=te) subagent, loading
 ### Step 1: Receive the Version and Task ID
 Receive the current version and task ID ({Task ID}, e.g., TASK-001) passed by the dispatcher.
 
+### Test Case Numbering Rule
+Each test case must have a globally unique number in the format: `TC-{version}-{task number}-{current sequence}`. For example: `TC-v0.0.1-TASK-001-001`. Where:
+- Version: the version number currently being executed
+- Task number: the associated task number
+- Current sequence: the incrementing sequence number of test cases under that task, starting from 001, zero-padded to three digits
+- Before writing test cases, first read the existing version test case document to obtain the current maximum sequence number; new cases start incrementing from max + 1 to ensure global uniqueness
+
 ### Step 2: Read the Task Context
 Call impm_doc_reader (docType=context, docType=cs, docType=ws, taskId={Task ID}) to read context.md, cs.md, and ws.md in the task directory.
 

@@ -1,5 +1,5 @@
 ---
-description: Generate and write the Product Requirement Document (PRD version document + master document)
+description: Generate and write the Product Requirement Document (PRD version document complete content + master document summary)
 agent: pm
 subtask: false
 ---
